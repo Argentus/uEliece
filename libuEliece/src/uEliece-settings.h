@@ -1,3 +1,21 @@
+/*
+ *	File:	"uEliece-settings.h"
+ *	Version: 0.7_alpha
+ *
+ * GitHub:
+ * 	https://github.com/Argentus/uEliece
+ *
+ * by authors:
+ *		# Radovan Bezak
+ *		radobezak@gmail.com
+ *
+ * 2016
+ *----------------------------------------------------- 
+ *
+ * 
+ *-----------------------------------------------------
+ */
+
 #ifndef UELIECE_SETTINGS_H
 #define UELIECE_SETTINGS_H
 
