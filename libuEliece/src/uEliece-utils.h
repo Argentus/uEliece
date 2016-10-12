@@ -1,8 +1,15 @@
 /*
- *	File:	"uEliece.h"
- * by author:
- *		Radovan Bezak, 2016
+ *	File:	"uEliece-utils.h"
+ *	Version: 0.7_alpha
+ *
+ * GitHub:
+ * 	https://github.com/Argentus/uEliece
+ *
+ * by authors:
+ *		# Radovan Bezak
  *		radobezak@gmail.com
+ *
+ * 2016
  *----------------------------------------------------- 
  *
  * 

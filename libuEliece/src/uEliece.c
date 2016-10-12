@@ -1,8 +1,15 @@
 /*
  *	File:	"uEliece.c"
- * by author:
- *		Radovan Bezak, 2016
+ *	Version: 0.7_alpha
+ *
+ * GitHub:
+ * 	https://github.com/Argentus/uEliece
+ *
+ * by authors:
+ *		# Radovan Bezak
  *		radobezak@gmail.com
+ *
+ * 2016
  *----------------------------------------------------- 
  * QC-MDPC MECS parameters:
  * 	- 128 bit security
