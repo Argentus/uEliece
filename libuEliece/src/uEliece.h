@@ -28,16 +28,28 @@
 #define UEL_MDPC_T 134
 #define UEL_MDPC_W 142
 
-#define BUILDTYPE_X64
-
 // Platform-specific settings
+
+#ifdef BUILDTYPE_X64_LINUX
+#define BUILDTYPE_LINUX
+#define BUILDTYPE_64BIT
+#endif //BUILDTYPE_X64_LINUX
+
+#ifdef BUILDTYPE_X64_LINUX
+#define BUILDTYPE_WINDOWS
+#define BUILDTYPE_64BIT
+#endif //BUILDTYPE_X64_WINDOWS
+
 #ifdef BUILDTYPE_AVR8
-typedef uint16_t uEl_msglen_t;
+#define BUILDTYPE_8BIT
+#define BUILDTYPE_SHORTMSG
 #endif //BUILDTYPE_AVR8
 
-#ifdef BUILDTYPE_X64
-typedef uint32_t uEl_msglen_t;
-#endif //BUILDTYPE_X64
+#ifdef BUILDTYPE_SHORTMSG
+typedef uint16_t uEl_msglen_t;
+#else
+typedef uint64_t uEl_msglen_t;
+#endif
 
 typedef struct uEl_rng {
 	uint8_t (*initRandom)();
@@ -45,7 +57,7 @@ typedef struct uEl_rng {
 	uint8_t (*closeRandom)();
 } uEl_rng;
 
-#ifdef linux
+#ifdef BUILDTYPE_LINUX
 const uEl_rng uEl_default_rng();
 #endif
 
@@ -72,10 +84,10 @@ typedef uint16_t uEl_PrivKey[UEL_MDPC_N0][UEL_MDPC_W/UEL_MDPC_N0];
  *		The memory will be reallocated and used to
  *		store the resulting plaintext.
  *
- * @param2:	uint32_t ctext_len
+ * @param2:	uEl_msglen_t ctext_len
  *		- length of ciphertext in bits
  *	
- * @param3:	uint32_t* len
+ * @param3:	uEl_msglen_t* len
  *		- pointer to where resulting plaintext
  *		length (in bytes) is to be written. Can be NULL if
  *		this information is not desired.
@@ -86,7 +98,7 @@ typedef uint16_t uEl_PrivKey[UEL_MDPC_N0][UEL_MDPC_W/UEL_MDPC_N0];
  * @returns: 0 if there was no error, otherwise flags:
  * 	
  */
-uint8_t uEliece_decrypt( uint8_t** ctext, uint32_t ctext_len, uint32_t* len, const uEl_PrivKey privkey);
+uint8_t uEliece_decrypt( uint8_t** ctext, uEl_msglen_t ctext_len, uEl_msglen_t* len, const uEl_PrivKey privkey);
 
 /* 
  * 	Function: uEliece_encrypt
@@ -102,10 +114,10 @@ uint8_t uEliece_decrypt( uint8_t** ctext, uint32_t ctext_len, uint32_t* len, con
  *		the memory will be reallocated and used to
  *		store the resulting ciphertext.
  *
- * @param2:	uint32_t len
+ * @param2:	uEl_msglen_t len
  *		- length of plaintext in bits
  *	
- * @param3:	uint32_t* result_len
+ * @param3:	uEl_msglen_t* result_len
  *		- pointer to where resulting ciphertext
  *		length is to be written. Can be NULL if
  *		this information is not desired.
@@ -119,7 +131,7 @@ uint8_t uEliece_decrypt( uint8_t** ctext, uint32_t ctext_len, uint32_t* len, con
  * @returns:	0 if successful
  *
  */
-uint8_t uEliece_encrypt( uint8_t** msg, uint32_t len, uint32_t* result_len, uEl_PubKey pubkey, uEl_rng* rng );
+uint8_t uEliece_encrypt( uint8_t** msg, uEl_msglen_t len, uEl_msglen_t* result_len, uEl_PubKey pubkey, uEl_rng* rng );
 
 // Macros for readability:
 #define UEL_M_BYTE_PADDING	(8-(UEL_MDPC_M%8))

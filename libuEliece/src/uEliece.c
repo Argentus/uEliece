@@ -540,7 +540,7 @@ uint8_t uEliece_add_errors( uint8_t* msg, uEl_rng* rng ) {
 
 /* Default random number generators */
 
-#ifdef linux
+#ifdef BUILDTYPE_LINUX
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -563,8 +563,11 @@ uint8_t uEl_linux_default_rng_get(void* buffer, uint8_t bytes) {
 }
 
 const uEl_rng uEl_default_rng() {
-	const uEl_rng defaultRng = (uEl_rng) { &uEl_linux_default_rng_init, &uEl_linux_default_rng_close, &uEl_linux_default_rng_get };
+	uEl_rng defaultRng = {	.initRandom = &uEl_linux_default_rng_init,
+				.closeRandom = &uEl_linux_default_rng_close,
+				.getRandom = &uEl_linux_default_rng_get
+			};
 	return defaultRng;
 }
 
-#endif
+#endif // BUILDTYPE_LINUX
