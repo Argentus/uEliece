@@ -1,14 +1,13 @@
 CC = gcc
 
-#CFLAGS  = -Wall -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,-s
-CFLAGS  = -Wall -g -O0
+CFLAGS  = -DBUILDTYPE_X64_LINUX -Wall -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,-s
 
 TARGET = uEl-file
 
 all: build/$(TARGET)
 
 build/$(TARGET): build/$(TARGET).o
-	$(CC) $(CFLAGS) -o build/$(TARGET) build/$(TARGET).o ../../../libuEliece/All/build/uEliece.o ../../../libuEliece/All/build/uEliece_Keccak.o
+	$(CC) $(CFLAGS) -o build/$(TARGET) build/$(TARGET).o ../../../libuEliece/release/x64-linux/libuEliece.a
 
 build/$(TARGET).o: $(TARGET).c uEl_keys.h
 	mkdir -p build
