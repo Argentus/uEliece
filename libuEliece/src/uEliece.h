@@ -35,7 +35,7 @@
 #define BUILDTYPE_64BIT
 #endif //BUILDTYPE_X64_LINUX
 
-#ifdef BUILDTYPE_X64_LINUX
+#ifdef BUILDTYPE_X64_WINDOWS
 #define BUILDTYPE_WINDOWS
 #define BUILDTYPE_64BIT
 #endif //BUILDTYPE_X64_WINDOWS
@@ -122,24 +122,25 @@ uint8_t uEliece_decrypt( uint8_t** ctext, uEl_msglen_t ctext_len, uEl_msglen_t* 
  *		length is to be written. Can be NULL if
  *		this information is not desired.
  *
- * @param4:	uEl_PubKey pubkey (see uEliece-utils.h)
+ * @param4:	uEl_PubKey pubkey
  *		- public key used for encryption
  *
- * @param5:	uEl_rng* rng
+ * @param5:	const uEl_rng rng
  *		- random number generator, NULL for default
  * ____________________________________________________
  * @returns:	0 if successful
  *
  */
-uint8_t uEliece_encrypt( uint8_t** msg, uEl_msglen_t len, uEl_msglen_t* result_len, uEl_PubKey pubkey, uEl_rng* rng );
+uint8_t uEliece_encrypt( uint8_t** msg, uEl_msglen_t len, uEl_msglen_t* result_len, uEl_PubKey pubkey, const uEl_rng rng );
 
 // Macros for readability:
 #define UEL_M_BYTE_PADDING	(8-(UEL_MDPC_M%8))
 #define UEL_M_PADDED		(UEL_MDPC_M + UEL_M_BYTE_PADDING)
+#define UEL_M_BYTES		(UEL_M_PADDED/8)
 #define UEL_PARITY_START	(ctext_len_bytes - (( UEL_M_PADDED)/8))		// First byte of parity bits 
 #define UEL_ENCODED_BLOCK_START (ctext_len_bytes - 2*(( UEL_M_PADDED )/8))		// First byte of ciphertext block used for McEliece encryption
 #define UEL_ENCODED_BLOCK_END   (ctext_len_bytes - (( UEL_MDPC_M + UEL_M_BYTE_PADDING )/8) - 1)	// 	- Last byte  -||-
-#define UEL_SSKEY_START		(ctext_len_bytes - (UEL_M_PADDED/8) - 1 - 32)
+#define UEL_SSKEY_START		(ctext_len_bytes - UEL_M_BYTES - 1 - 32)
 
 // Types:
 typedef uint8_t uEl_256bit[32];

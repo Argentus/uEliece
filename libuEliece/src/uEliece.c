@@ -100,35 +100,23 @@ uint8_t uEliece_decrypt( uint8_t** msg, uEl_msglen_t ctext_len, uEl_msglen_t* le
  * @param4:	uEl_PubKey pubkey (see uEliece-utils.h)
  *		- public key used for encryption
  *
- * @param5:	uEl_rng* rng
+ * @param5:	const uEl_rng rng
  *		- random number generator, NULL for default if defined
  * ____________________________________________________
  * @returns:	0 if successful
  *
  */
-uint8_t uEliece_encrypt( uint8_t** msg, uEl_msglen_t len, uEl_msglen_t* result_len, uEl_PubKey pubkey, uEl_rng* rng ) {
-
-	if (rng == NULL)
-#ifdef DEFAULT_RNG_DEFINED
-		rng = &uEl_default_rng;
-#else
-		return UEL_RNG_FAULT;
-#endif
-
+uint8_t uEliece_encrypt( uint8_t** msg, uEl_msglen_t len, uEl_msglen_t* result_len, uEl_PubKey pubkey, const uEl_rng rng ) {
 	
 	uint8_t encryption_state = 0; 			// Return value, 0 correct, flags for errors
-
-	rng->initRandom();
 
 	encryption_state |= uEliece_encryption_prepare(msg, len, result_len);
 	if (encryption_state & UEL_MALLOC_FAIL)
 		return encryption_state;
 	const uEl_msglen_t ctext_len_bytes = *result_len;
-	encryption_state |= uEliece_wrap(MSG, len, result_len, rng);
+	encryption_state |= uEliece_wrap(MSG, len, result_len, &rng);
 	encryption_state |= uEliece_encode(MSG+UEL_ENCODED_BLOCK_START, pubkey);
-	encryption_state |= uEliece_add_errors(MSG+UEL_ENCODED_BLOCK_START, rng);
-
-	rng->closeRandom();
+	encryption_state |= uEliece_add_errors(MSG+UEL_ENCODED_BLOCK_START, &rng);
 	
 	return encryption_state;
 }
@@ -356,13 +344,14 @@ uint8_t uEliece_encryption_prepare( uint8_t** msg, uEl_msglen_t len, uEl_msglen_
 		ctext_len = len + (8 - (len%8)) +  2*256 + 8 + UEL_M_PADDED;
 
 	const uEl_msglen_t ctext_len_bytes = ctext_len / 8;
+	*result_len = ctext_len_bytes;
+
 	/* 
 	 * Allocate additional memory for ciphertext
 	 */
-	MSG = realloc(MSG,ctext_len_bytes);	
+	MSG = realloc(MSG,ctext_len_bytes*sizeof(uint8_t));
 	if (MSG == NULL)
 		return UEL_MALLOC_FAIL;		// Error: Could not allocate memory
-	
 	/* 
 	 * Add padding byte
 	 */
@@ -387,8 +376,6 @@ uint8_t uEliece_encryption_prepare( uint8_t** msg, uEl_msglen_t len, uEl_msglen_
 	for (i=len_full_bytes+32; i<=ctext_len_bytes; i++)
 		MSG[i] = 0;
 
-	*result_len = ctext_len_bytes;
-
 	return return_state;
 
 }
@@ -403,8 +390,10 @@ uint8_t uEliece_wrap( uint8_t* msg, uEl_msglen_t len, uEl_msglen_t* result_len, 
 	/* 
 	 * Generate session key
 	 */
+	rng->initRandom();
 	uEl_256bit sskey;
 	rng->getRandom(sskey, 32);
+	rng->closeRandom();
 
 	/* 
 	 * Init PRNG with session key
@@ -512,6 +501,7 @@ uint8_t uEliece_add_errors( uint8_t* msg, uEl_rng* rng ) {
 	 */
 	uint16_t errv[UEL_MDPC_T];
 	uint8_t used;
+	rng->initRandom();
 	for (i=0;i<UEL_MDPC_T;i++) {
 		do {
 			do { 
@@ -527,7 +517,7 @@ uint8_t uEliece_add_errors( uint8_t* msg, uEl_rng* rng ) {
 			}
 		} while (used!=0);
 	}
-
+	rng->closeRandom();
 	/* 
 	 * Apply error vector
 	 */

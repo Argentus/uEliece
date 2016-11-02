@@ -25,4 +25,6 @@ clean:
 release:
 	mkdir -p ../release/$(BUILDTYPE)
 	cp build/libuEliece.a ../release/$(BUILDTYPE)/libuEliece-$(VERSION).a
+	rm -f ../release/$(BUILDTYPE)/libuEliece.a
+	ln -s libuEliece-$(VERSION).a ../release/$(BUILDTYPE)/libuEliece.a
 	
