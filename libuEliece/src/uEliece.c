@@ -301,7 +301,7 @@ uint8_t uEliece_verify( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len)
 
 	uint8_t return_state = 0; 			// Return value, 0 correct, flags for errors
 	const uint32_t ctext_len_bytes = ctext_len/8;
-	uint16_t i;
+	uEl_msglen_t i;
 
 	/* 
 	 * Find integrity check constant
