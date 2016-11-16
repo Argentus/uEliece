@@ -62,7 +62,7 @@
 uint8_t uEliece_decrypt( uint8_t** msg, uEl_msglen_t ctext_len, uEl_msglen_t* len, const uEl_PrivKey privkey) {
 
 	uint8_t decryption_state = 0; 			// Return value, 0 correct, flags for errors
-	const uint32_t ctext_len_bytes = ctext_len/8;
+	const uEl_msglen_t ctext_len_bytes = ctext_len/8;
 
 	decryption_state |= uEliece_decode(MSG+UEL_ENCODED_BLOCK_START, privkey);
 	decryption_state |= uEliece_unwrap(MSG, ctext_len, len);
@@ -236,8 +236,8 @@ uint8_t uEliece_decode( uint8_t* msg, const uEl_PrivKey privkey) {
 uint8_t uEliece_unwrap( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len) {
 
 	uint8_t return_state = 0; 			// Return value, 0 correct, flags for errors
-	const uint32_t ctext_len_bytes = ctext_len/8;
-	uint16_t i, j;
+	const uEl_msglen_t ctext_len_bytes = ctext_len/8;
+	int i, j;
 
 	/* 
 	 * Get encrypted session key
@@ -264,7 +264,7 @@ uint8_t uEliece_unwrap( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len)
 	/* 
 	 * Decrypt message by 256-bit blocks
 	 */
-	const uint32_t full_blocks_to_decrypt = (ctext_len - UEL_M_PADDED - 256 - 8)/256;
+	const uEl_msglen_t full_blocks_to_decrypt = (ctext_len - UEL_M_PADDED - 256 - 8)/256;
 
 	for (i=0;i<full_blocks_to_decrypt;i++)
 	{
@@ -288,7 +288,7 @@ uint8_t uEliece_unwrap( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len)
 uint8_t uEliece_verify( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len) {
 
 	uint8_t return_state = 0; 			// Return value, 0 correct, flags for errors
-	const uint32_t ctext_len_bytes = ctext_len/8;
+	uEl_msglen_t ctext_len_bytes = ctext_len/8;
 	uEl_msglen_t i;
 
 	/* 
@@ -330,9 +330,9 @@ uint8_t uEliece_encryption_prepare( uint8_t** msg, uEl_msglen_t len, uEl_msglen_
 	
 	uint8_t return_state = 0; 			// Return value, 0 correct, flags for errors
 
-	uint32_t i;					// iterators
-	uint32_t ctext_len;
-	uint32_t len_full_bytes = len / 8;
+	uEl_msglen_t i;					// iterators
+	uEl_msglen_t ctext_len;
+	uEl_msglen_t len_full_bytes;
 
 	/* 
 	 * Calculate resulting ciphertext length
