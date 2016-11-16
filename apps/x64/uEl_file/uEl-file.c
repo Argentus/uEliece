@@ -42,19 +42,20 @@ int main(int argc, char *argv[]) {
 
 	FILE* infile = fopen(argv[2],"rb");
 	fseek(infile, 0, SEEK_END);
-	long file_size = ftell(infile);
+	uint64_t file_size = ftell(infile);
 	fseek(infile, 0, SEEK_SET);
 	uint8_t *msg = malloc(file_size);
 	fread(msg, file_size, 1, infile);
 	fclose(infile);
 
 	uEl_msglen_t length;
+	uEl_msglen_t len = file_size * 8;
 
 	if (mode==0) {
 		printf("Encrypting\n"); fflush(stdout);
-		uEliece_encrypt( &msg, file_size*8, &length, public_key, uEl_default_rng() );
+		uEliece_encrypt( &msg, len, &length, public_key, uEl_default_rng() );
 	} else {
-		if (uEliece_decrypt( &msg, file_size*8, &length, private_key ) & UEL_BAD_INTEGRITY)
+		if (uEliece_decrypt( &msg, len, &length, private_key ) & UEL_BAD_INTEGRITY)
 			printf("BAD INTEGRITY\n");
 	}
 	FILE* outfile = fopen(argv[3],"wb");
