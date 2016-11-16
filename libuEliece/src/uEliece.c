@@ -333,6 +333,7 @@ uint8_t uEliece_encryption_prepare( uint8_t** msg, uEl_msglen_t len, uEl_msglen_
 	uEl_msglen_t i;					// iterators
 	uEl_msglen_t ctext_len;
 	uEl_msglen_t len_full_bytes;
+	len_full_bytes = len / 8;
 
 	/* 
 	 * Calculate resulting ciphertext length
