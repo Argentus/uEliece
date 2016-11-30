@@ -230,6 +230,10 @@ uint8_t uEliece_decode( uint8_t* msg, const uEl_PrivKey privkey) {
 			}
 		}
 	}
+
+	if (!syndromeZero) {
+		return_state |= UEL_DECODE_FAIL;
+	}
 	return return_state;
 }
 

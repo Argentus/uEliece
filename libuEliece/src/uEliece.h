@@ -66,6 +66,7 @@ const uEl_rng uEl_default_rng();
 #define UEL_BAD_INTEGRITY (1<<0)
 #define UEL_MALLOC_FAIL (1<<1)
 #define UEL_RNG_FAULT (1<<2)
+#define UEL_DECODE_FAIL (1<<3)
 
 typedef uint8_t uEl_PubKey[(UEL_MDPC_M/8)+1];
 typedef uint16_t uEl_PrivKey[UEL_MDPC_N0][UEL_MDPC_W/UEL_MDPC_N0];
