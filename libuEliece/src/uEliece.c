@@ -18,6 +18,10 @@
  *	- w = 142	(QC-MDPC matrix line weight)
  *	- t = 134	(number of errors inflicted on encoded message)
  *-----------------------------------------------------
+ *
+ *
+ *
+ *
  */
 
 #include "Keccak/Keccak-compact.h"
@@ -29,6 +33,12 @@
 #include <stdint.h>
 
 #define MSG (*msg)
+
+
+/***
+ *** 1. Quick use functions
+ ***
+ ***/
 
 /*
  * 	Function:  uEliece_decrypt 
@@ -121,7 +131,13 @@ uint8_t uEliece_encrypt( uint8_t** msg, uEl_msglen_t len, uEl_msglen_t* result_l
 	return encryption_state;
 }
 
-/* Decryption methods */
+/***
+ *** 2. Decryption functions
+ ***
+ ***/
+
+	/*** 2.1 Decoding helper functions
+	 ***/
 
 uint8_t uEliece_syndrome( uint8_t* msg, const uEl_PrivKey privkey, uEl_Mbits msg_syndrome ) {
 
@@ -159,6 +175,7 @@ uint8_t uEliece_syndrome( uint8_t* msg, const uEl_PrivKey privkey, uEl_Mbits msg
 
 }
 
+	
 uint16_t uEliece_count_upc( uint8_t* msg, const uEl_PrivKey privkey, const uEl_Mbits msg_syndrome, uint16_t index) {
 
 	uint8_t half = index / UEL_MDPC_M;
@@ -175,6 +192,9 @@ uint16_t uEliece_count_upc( uint8_t* msg, const uEl_PrivKey privkey, const uEl_M
 
 	return n_upc;
 }
+
+	/*** 2.1 QC-MDPC Decoding algorithms
+	 ***/
 
 /* 
  * uEliece_decode_bf1
