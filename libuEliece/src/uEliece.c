@@ -159,6 +159,23 @@ uint8_t uEliece_syndrome( uint8_t* msg, const uEl_PrivKey privkey, uEl_Mbits msg
 
 }
 
+uint16_t uEliece_count_upc( uint8_t* msg, const uEl_PrivKey privkey, const uEl_Mbits msg_syndrome, uint16_t index) {
+
+	uint8_t half = index / UEL_MDPC_M;
+	index = index % UEL_MDPC_M;
+
+	uint16_t k;
+	uint16_t n_upc = 0;
+	uint32_t rotated_index;
+	for(k=0;k<UEL_MDPC_W/UEL_MDPC_N0;k++) {
+		rotated_index = ((UEL_MDPC_M - privkey[half][k] + index )% UEL_MDPC_M );
+		if ( (msg_syndrome[(rotated_index/8)] & (1 << (rotated_index%8))) )
+			n_upc++;
+	}
+
+	return n_upc;
+}
+
 uint8_t uEliece_decode( uint8_t* msg, const uEl_PrivKey privkey ) {
 
 	uint8_t return_state = 0; 			// Return value, 0 correct, flags for errors
@@ -167,7 +184,7 @@ uint8_t uEliece_decode( uint8_t* msg, const uEl_PrivKey privkey ) {
 	uEl_Mbits msg_syndrome;
 	return_state |= uEliece_syndrome(msg, privkey, msg_syndrome);
 
-	uint32_t n_upc;
+	uint16_t n_upc;
 	uint8_t syndromeZero;
 	uint32_t rotated_index;
 	for (i=0;i<UEL_BFA_MAX;i++) {
@@ -182,12 +199,7 @@ uint8_t uEliece_decode( uint8_t* msg, const uEl_PrivKey privkey ) {
 			break;
 		
 		for (j=0;j<UEL_MDPC_M;j++) {
-			n_upc = 0;
-			for(k=0;k<UEL_MDPC_W/UEL_MDPC_N0;k++) {
-				rotated_index = ((UEL_MDPC_M - privkey[0][k] + j )% UEL_MDPC_M );
-				if ( (msg_syndrome[(rotated_index/8)] & (1 << (rotated_index%8))) )
-					n_upc++;
-			}
+			n_upc = uEliece_count_upc(msg, privkey, msg_syndrome, j);
 			if (n_upc >= uel_bfa_flip_thresh[i]) {
 				msg[(j/8)] ^= 1<<(j%8);
 				for (k=0;k<(UEL_MDPC_W/UEL_MDPC_N0);k++) {
@@ -208,12 +220,7 @@ uint8_t uEliece_decode( uint8_t* msg, const uEl_PrivKey privkey ) {
 		for (j=0;j<UEL_MDPC_M;j++) {
 			if (syndromeZero)
 				break;
-			n_upc = 0;
-			for(k=0;k<UEL_MDPC_W/UEL_MDPC_N0;k++) {
-				rotated_index = ((UEL_MDPC_M - privkey[1][k] + j )% UEL_MDPC_M );
-				if ( (msg_syndrome[(rotated_index/8)] & (1 << (rotated_index%8))) )
-					n_upc++;
-			}
+			n_upc = uEliece_count_upc(msg, privkey, msg_syndrome, j + UEL_MDPC_M);
 			if (n_upc >= uel_bfa_flip_thresh[i]) {
 				msg[(UEL_M_PADDED/8)+(j/8)] ^= 1<<(j%8);
 				for (k=0;k<(UEL_MDPC_W/UEL_MDPC_N0);k++) {
