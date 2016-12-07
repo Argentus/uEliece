@@ -150,6 +150,7 @@ typedef uint8_t uEl_Mbits[(UEL_MDPC_M/8)+1];
 
 typedef uint16_t uEl_ErrorVector[UEL_MDPC_T];
 
+uint8_t uEliece_syndrome( uint8_t* msg, const uEl_PrivKey privkey, uEl_Mbits syndrome );
 uint8_t uEliece_decode( uint8_t* msg, const uEl_PrivKey privkey);
 uint8_t uEliece_unwrap( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len);
 uint8_t uEliece_verify( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len);
