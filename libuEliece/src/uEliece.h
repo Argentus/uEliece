@@ -152,7 +152,12 @@ typedef uint16_t uEl_ErrorVector[UEL_MDPC_T];
 
 uint8_t uEliece_syndrome( uint8_t* msg, const uEl_PrivKey privkey, uEl_Mbits syndrome );
 uint16_t uEliece_count_upc( uint8_t* msg, const uEl_PrivKey privkey, const uEl_Mbits msg_syndrome, uint16_t index );
-uint8_t uEliece_decode( uint8_t* msg, const uEl_PrivKey privkey);
+/* 
+ * uEliece_decode_bf1
+ * Bit flipping algorithm, variant 1
+ * 
+ */
+uint8_t uEliece_decode_bf1( uint8_t* msg, const uEl_PrivKey privkey);
 uint8_t uEliece_unwrap( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len);
 uint8_t uEliece_verify( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len);
 uint8_t uEliece_encryption_prepare( uint8_t** msg, uEl_msglen_t len, uEl_msglen_t* result_len);

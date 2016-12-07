@@ -64,7 +64,7 @@ uint8_t uEliece_decrypt( uint8_t** msg, uEl_msglen_t ctext_len, uEl_msglen_t* le
 	uint8_t decryption_state = 0; 			// Return value, 0 correct, flags for errors
 	const uEl_msglen_t ctext_len_bytes = ctext_len/8;
 
-	decryption_state |= uEliece_decode(MSG+UEL_ENCODED_BLOCK_START, privkey);
+	decryption_state |= uEliece_decode_bf1(MSG+UEL_ENCODED_BLOCK_START, privkey);
 	decryption_state |= uEliece_unwrap(MSG, ctext_len, len);
 	decryption_state |= uEliece_verify(MSG, ctext_len, len);
 
@@ -176,7 +176,12 @@ uint16_t uEliece_count_upc( uint8_t* msg, const uEl_PrivKey privkey, const uEl_M
 	return n_upc;
 }
 
-uint8_t uEliece_decode( uint8_t* msg, const uEl_PrivKey privkey ) {
+/* 
+ * uEliece_decode_bf1
+ * Bit flipping algorithm, variant 1
+ * 
+ */
+uint8_t uEliece_decode_bf1( uint8_t* msg, const uEl_PrivKey privkey ) {
 
 	uint8_t return_state = 0; 			// Return value, 0 correct, flags for errors
 	uint16_t i, j, k;
