@@ -488,7 +488,10 @@ uint8_t uEliece_encode( uint8_t* msg, uEl_PubKey pubkey ) {
 
 	/* 
 	 * Encode - multiply by generator matrix
-	 */	
+	 */
+
+        memset(msg + UEL_M_BYTES, 0, UEL_M_BYTES);
+	
 	if (msg[0]&((uint8_t) 1))
 		for(j=0;j<((UEL_M_PADDED)/8);j++) {
 			msg[(UEL_M_PADDED/8)+j] ^= pubkey[j];
