@@ -155,8 +155,8 @@ uint8_t uEliece_decode( uint8_t* msg, const uEl_PrivKey privkey);
 uint8_t uEliece_unwrap( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len);
 uint8_t uEliece_verify( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len);
 uint8_t uEliece_encryption_prepare( uint8_t** msg, uEl_msglen_t len, uEl_msglen_t* result_len);
-uint8_t uEliece_wrap( uint8_t* msg, uEl_msglen_t len, uEl_msglen_t* result_len, uEl_rng* rng );
+uint8_t uEliece_wrap( uint8_t* msg, uEl_msglen_t len, uEl_msglen_t* result_len, const uEl_rng* rng );
 uint8_t uEliece_encode( uint8_t* msg, uEl_PubKey pubkey );
-uint8_t uEliece_add_errors( uint8_t* msg, uEl_rng* rng  );
+uint8_t uEliece_add_errors( uint8_t* msg, const uEl_rng* rng  );
 
 #endif // UELIECE_H

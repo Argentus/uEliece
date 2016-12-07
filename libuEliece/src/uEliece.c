@@ -387,7 +387,7 @@ uint8_t uEliece_encryption_prepare( uint8_t** msg, uEl_msglen_t len, uEl_msglen_
 
 }
 
-uint8_t uEliece_wrap( uint8_t* msg, uEl_msglen_t len, uEl_msglen_t* result_len, uEl_rng* rng) {
+uint8_t uEliece_wrap( uint8_t* msg, uEl_msglen_t len, uEl_msglen_t* result_len, const uEl_rng* rng) {
 	
 	uint8_t return_state = 0; 			// Return value, 0 correct, flags for errors
 
@@ -498,7 +498,7 @@ uint8_t uEliece_encode( uint8_t* msg, uEl_PubKey pubkey ) {
 	return return_state;
 }
 
-uint8_t uEliece_add_errors( uint8_t* msg, uEl_rng* rng ) {
+uint8_t uEliece_add_errors( uint8_t* msg, const uEl_rng* rng ) {
 	
 	uint8_t return_state = 0; 			// Return value, 0 correct, flags for errors
 	uint32_t i, j;					// iterators
