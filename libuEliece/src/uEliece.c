@@ -18,6 +18,10 @@
  *	- w = 142	(QC-MDPC matrix line weight)
  *	- t = 134	(number of errors inflicted on encoded message)
  *-----------------------------------------------------
+ *
+ *
+ *
+ *
  */
 
 #include "Keccak/Keccak-compact.h"
@@ -29,6 +33,12 @@
 #include <stdint.h>
 
 #define MSG (*msg)
+
+
+/***
+ *** 1. Quick use functions
+ ***
+ ***/
 
 /*
  * 	Function:  uEliece_decrypt 
@@ -64,7 +74,7 @@ uint8_t uEliece_decrypt( uint8_t** msg, uEl_msglen_t ctext_len, uEl_msglen_t* le
 	uint8_t decryption_state = 0; 			// Return value, 0 correct, flags for errors
 	const uEl_msglen_t ctext_len_bytes = ctext_len/8;
 
-	decryption_state |= uEliece_decode(MSG+UEL_ENCODED_BLOCK_START, privkey);
+	decryption_state |= uEliece_decode_bf1(MSG+UEL_ENCODED_BLOCK_START, privkey);
 	decryption_state |= uEliece_unwrap(MSG, ctext_len, len);
 	decryption_state |= uEliece_verify(MSG, ctext_len, len);
 
@@ -121,23 +131,25 @@ uint8_t uEliece_encrypt( uint8_t** msg, uEl_msglen_t len, uEl_msglen_t* result_l
 	return encryption_state;
 }
 
-/* Decryption methods */
+/***
+ *** 2. Decryption functions
+ ***
+ ***/
 
-uint8_t uEliece_decode( uint8_t* msg, const uEl_PrivKey privkey) {
+	/*** 2.1 Decoding helper functions
+	 ***/
+
+uint8_t uEliece_syndrome( uint8_t* msg, const uEl_PrivKey privkey, uEl_Mbits msg_syndrome ) {
 
 	uint8_t return_state = 0; 			// Return value, 0 correct, flags for errors
-	uint16_t i, j, k;	
-	
-	/* 
-	 * Calculate syndrome
-	 *
-	 */
+	uint16_t i, j;
 	uint32_t rotated_index;
-	uEl_Mbits msg_syndrome;
+
 	for (i=0;i<(UEL_M_PADDED/8);i++)		// Init syndrome to 0
 		msg_syndrome[i]=0;
 
-	for (i=0;i<UEL_MDPC_M;i++) {			// Multiply by parity check matrix part 1
+							// Multiply message by parity check matrix
+	for (i=0;i<UEL_MDPC_M;i++) {			// first half (message part)
 		
 		if ( (msg[(i/8)] & (1 << (i%8))) ) {
 
@@ -149,7 +161,7 @@ uint8_t uEliece_decode( uint8_t* msg, const uEl_PrivKey privkey) {
 		}
 	}
 
-	for (i=0;i<UEL_MDPC_M;i++) {			// Multiply by parity check matrix part 2
+	for (i=0;i<UEL_MDPC_M;i++) {			// second half (parity part)
 		
 		if ( (msg[(UEL_M_PADDED/8) + (i/8)] & (1 << (i%8))) ) {
 			for (j=0;j<(UEL_MDPC_W/UEL_MDPC_N0);j++) {
@@ -159,15 +171,47 @@ uint8_t uEliece_decode( uint8_t* msg, const uEl_PrivKey privkey) {
 		} 
 	}
 
+	return return_state;
 
-	/*
-	 * Bit flipping algorithm: Remove errors
-	 *
-	 */
+}
 
-	uint32_t n_upc;
+	
+uint16_t uEliece_count_upc( uint8_t* msg, const uEl_PrivKey privkey, const uEl_Mbits msg_syndrome, uint16_t index) {
+
+	uint8_t half = index / UEL_MDPC_M;
+	index = index % UEL_MDPC_M;
+
+	uint16_t k;
+	uint16_t n_upc = 0;
+	uint32_t rotated_index;
+	for(k=0;k<UEL_MDPC_W/UEL_MDPC_N0;k++) {
+		rotated_index = ((UEL_MDPC_M - privkey[half][k] + index )% UEL_MDPC_M );
+		if ( (msg_syndrome[(rotated_index/8)] & (1 << (rotated_index%8))) )
+			n_upc++;
+	}
+
+	return n_upc;
+}
+
+	/*** 2.1 QC-MDPC Decoding algorithms
+	 ***/
+
+/* 
+ * uEliece_decode_bf1
+ * Bit flipping algorithm, variant 1
+ * 
+ */
+uint8_t uEliece_decode_bf1( uint8_t* msg, const uEl_PrivKey privkey ) {
+
+	uint8_t return_state = 0; 			// Return value, 0 correct, flags for errors
+	uint16_t i, j, k;
+
+	uEl_Mbits msg_syndrome;
+	return_state |= uEliece_syndrome(msg, privkey, msg_syndrome);
+
+	uint16_t n_upc;
 	uint8_t syndromeZero;
-	// reusing uint32_t rotated_index
+	uint32_t rotated_index;
 	for (i=0;i<UEL_BFA_MAX;i++) {
 
 		syndromeZero=1;
@@ -180,12 +224,7 @@ uint8_t uEliece_decode( uint8_t* msg, const uEl_PrivKey privkey) {
 			break;
 		
 		for (j=0;j<UEL_MDPC_M;j++) {
-			n_upc = 0;
-			for(k=0;k<UEL_MDPC_W/UEL_MDPC_N0;k++) {
-				rotated_index = ((UEL_MDPC_M - privkey[0][k] + j )% UEL_MDPC_M );
-				if ( (msg_syndrome[(rotated_index/8)] & (1 << (rotated_index%8))) )
-					n_upc++;
-			}
+			n_upc = uEliece_count_upc(msg, privkey, msg_syndrome, j);
 			if (n_upc >= uel_bfa_flip_thresh[i]) {
 				msg[(j/8)] ^= 1<<(j%8);
 				for (k=0;k<(UEL_MDPC_W/UEL_MDPC_N0);k++) {
@@ -206,12 +245,7 @@ uint8_t uEliece_decode( uint8_t* msg, const uEl_PrivKey privkey) {
 		for (j=0;j<UEL_MDPC_M;j++) {
 			if (syndromeZero)
 				break;
-			n_upc = 0;
-			for(k=0;k<UEL_MDPC_W/UEL_MDPC_N0;k++) {
-				rotated_index = ((UEL_MDPC_M - privkey[1][k] + j )% UEL_MDPC_M );
-				if ( (msg_syndrome[(rotated_index/8)] & (1 << (rotated_index%8))) )
-					n_upc++;
-			}
+			n_upc = uEliece_count_upc(msg, privkey, msg_syndrome, j + UEL_MDPC_M);
 			if (n_upc >= uel_bfa_flip_thresh[i]) {
 				msg[(UEL_M_PADDED/8)+(j/8)] ^= 1<<(j%8);
 				for (k=0;k<(UEL_MDPC_W/UEL_MDPC_N0);k++) {
@@ -385,7 +419,7 @@ uint8_t uEliece_encryption_prepare( uint8_t** msg, uEl_msglen_t len, uEl_msglen_
 
 }
 
-uint8_t uEliece_wrap( uint8_t* msg, uEl_msglen_t len, uEl_msglen_t* result_len, uEl_rng* rng) {
+uint8_t uEliece_wrap( uint8_t* msg, uEl_msglen_t len, uEl_msglen_t* result_len, const uEl_rng* rng) {
 	
 	uint8_t return_state = 0; 			// Return value, 0 correct, flags for errors
 
@@ -496,7 +530,7 @@ uint8_t uEliece_encode( uint8_t* msg, uEl_PubKey pubkey ) {
 	return return_state;
 }
 
-uint8_t uEliece_add_errors( uint8_t* msg, uEl_rng* rng ) {
+uint8_t uEliece_add_errors( uint8_t* msg, const uEl_rng* rng ) {
 	
 	uint8_t return_state = 0; 			// Return value, 0 correct, flags for errors
 	uint32_t i, j;					// iterators

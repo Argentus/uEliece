@@ -22,13 +22,46 @@
 
 #include <stdint.h>
 
+/*
+ * Macro definitons:
+ */
+
+// Encryption parameters:
 #define UEL_MDPC_N 19714 	
 #define UEL_MDPC_N0 2
 #define UEL_MDPC_M (UEL_MDPC_N/UEL_MDPC_N0)
 #define UEL_MDPC_T 134
 #define UEL_MDPC_W 142
 
-// Platform-specific settings
+// Macros for readability:
+#define UEL_M_BYTE_PADDING	(8-(UEL_MDPC_M%8))
+#define UEL_M_PADDED		(UEL_MDPC_M + UEL_M_BYTE_PADDING)
+#define UEL_M_BYTES		(UEL_M_PADDED/8)
+#define UEL_PARITY_START	(ctext_len_bytes - (( UEL_M_PADDED)/8))		// First byte of parity bits 
+#define UEL_ENCODED_BLOCK_START (ctext_len_bytes - 2*(( UEL_M_PADDED )/8))		// First byte of ciphertext block used for McEliece encryption
+#define UEL_ENCODED_BLOCK_END   (ctext_len_bytes - (( UEL_MDPC_M + UEL_M_BYTE_PADDING )/8) - 1)	// 	- Last byte  -||-
+#define UEL_SSKEY_START		(ctext_len_bytes - UEL_M_BYTES - 1 - 32)
+
+/* 
+ * Type definitions:
+ */
+
+typedef uint8_t uEl_PubKey[(UEL_MDPC_M/8)+1];
+typedef uint16_t uEl_PrivKey[UEL_MDPC_N0][UEL_MDPC_W/UEL_MDPC_N0];
+
+typedef struct uEl_rng {
+	uint8_t (*initRandom)();
+	uint8_t (*getRandom)(void*, uint8_t);
+	uint8_t (*closeRandom)();
+} uEl_rng;
+
+typedef uint8_t uEl_256bit[32];
+typedef uint8_t uEl_Mbits[(UEL_MDPC_M/8)+1];
+typedef uint16_t uEl_ErrorVector[UEL_MDPC_T];
+
+/* 
+ * Buildtype definitions:
+ */
 
 #ifdef BUILDTYPE_X64_LINUX
 #define BUILDTYPE_LINUX
@@ -51,25 +84,22 @@ typedef uint16_t uEl_msglen_t;
 typedef uint64_t uEl_msglen_t;
 #endif
 
-typedef struct uEl_rng {
-	uint8_t (*initRandom)();
-	uint8_t (*getRandom)(void*, uint8_t);
-	uint8_t (*closeRandom)();
-} uEl_rng;
-
 #ifdef BUILDTYPE_LINUX
 const uEl_rng uEl_default_rng();
 #endif
 
 
-// RETURN VALUES:
+/*
+ * Function return flags
+ */
 #define UEL_BAD_INTEGRITY (1<<0)
 #define UEL_MALLOC_FAIL (1<<1)
 #define UEL_RNG_FAULT (1<<2)
 #define UEL_DECODE_FAIL (1<<3)
 
-typedef uint8_t uEl_PubKey[(UEL_MDPC_M/8)+1];
-typedef uint16_t uEl_PrivKey[UEL_MDPC_N0][UEL_MDPC_W/UEL_MDPC_N0];
+/*
+ * Quick use functions:
+ */
 
 /*
  * 	Function:  uEliece_decrypt 
@@ -134,28 +164,55 @@ uint8_t uEliece_decrypt( uint8_t** ctext, uEl_msglen_t ctext_len, uEl_msglen_t* 
  */
 uint8_t uEliece_encrypt( uint8_t** msg, uEl_msglen_t len, uEl_msglen_t* result_len, uEl_PubKey pubkey, const uEl_rng rng );
 
-// Macros for readability:
-#define UEL_M_BYTE_PADDING	(8-(UEL_MDPC_M%8))
-#define UEL_M_PADDED		(UEL_MDPC_M + UEL_M_BYTE_PADDING)
-#define UEL_M_BYTES		(UEL_M_PADDED/8)
-#define UEL_PARITY_START	(ctext_len_bytes - (( UEL_M_PADDED)/8))		// First byte of parity bits 
-#define UEL_ENCODED_BLOCK_START (ctext_len_bytes - 2*(( UEL_M_PADDED )/8))		// First byte of ciphertext block used for McEliece encryption
-#define UEL_ENCODED_BLOCK_END   (ctext_len_bytes - (( UEL_MDPC_M + UEL_M_BYTE_PADDING )/8) - 1)	// 	- Last byte  -||-
-#define UEL_SSKEY_START		(ctext_len_bytes - UEL_M_BYTES - 1 - 32)
 
-// Types:
-typedef uint8_t uEl_256bit[32];
+/*
+ * Decoding helper functions
+ */
+uint8_t uEliece_syndrome( uint8_t* msg, const uEl_PrivKey privkey, uEl_Mbits syndrome );
+uint16_t uEliece_count_upc( uint8_t* msg, const uEl_PrivKey privkey, const uEl_Mbits msg_syndrome, uint16_t index );
 
-typedef uint8_t uEl_Mbits[(UEL_MDPC_M/8)+1];
+/*
+ * Decoding algorithm functions
+ */
 
-typedef uint16_t uEl_ErrorVector[UEL_MDPC_T];
+/* 
+ * 	Function type: uEliece_decode_f
+ * ------------------------------- 
+ *	Function of this type decodes encoded message,
+ *	removing errors in the process.
+ * ____________________________________________________
+ * @param1:	uint8_t* msg
+ *		- pointer to codeword, which will
+ *		be overwritten by decoded message.
+ *		Codeword length is UEL_M_BYTES*2 
+ *
+ * @param2:	const uEl_PrivKey privkey
+ *		- private key for decoding
+ * ____________________________________________________
+ * @returns:	0 if successful
+ *
+ */
+typedef  uint8_t (*uEliece_decode_f)(uint8_t*, const uEl_PrivKey);
 
-uint8_t uEliece_decode( uint8_t* msg, const uEl_PrivKey privkey);
+/* 
+ * uEliece_decode_bf1
+ * Bit flipping algorithm, variant 1
+ * 
+ */
+uint8_t uEliece_decode_bf1( uint8_t* msg, const uEl_PrivKey privkey);
+
+/*
+ * Decryption functions
+ */
 uint8_t uEliece_unwrap( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len);
 uint8_t uEliece_verify( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len);
+
+/*
+ * Encryption functions
+ */
 uint8_t uEliece_encryption_prepare( uint8_t** msg, uEl_msglen_t len, uEl_msglen_t* result_len);
-uint8_t uEliece_wrap( uint8_t* msg, uEl_msglen_t len, uEl_msglen_t* result_len, uEl_rng* rng );
+uint8_t uEliece_wrap( uint8_t* msg, uEl_msglen_t len, uEl_msglen_t* result_len, const uEl_rng* rng );
 uint8_t uEliece_encode( uint8_t* msg, uEl_PubKey pubkey );
-uint8_t uEliece_add_errors( uint8_t* msg, uEl_rng* rng  );
+uint8_t uEliece_add_errors( uint8_t* msg, const uEl_rng* rng  );
 
 #endif // UELIECE_H
