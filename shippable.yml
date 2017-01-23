@@ -1,0 +1,8 @@
+language: c
+
+compiler: gcc
+
+build:
+  ci:
+    - make -C ./libuEliece/ x64-linux
+    - make -C ./libuEliece/ x64-windows
