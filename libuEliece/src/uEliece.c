@@ -40,35 +40,6 @@
  ***
  ***/
 
-/*
- * 	Function:  uEliece_decrypt 
- * --------------------
- * 	This function decrypts given message using the
- *	uEliece cryptosystem with specified private
- *	key. Resulting plaintext is stored in place
- *	of the original message.
- * _________________________________________________
- * @param1:	uint8_t** msg 
- *		- pointer to pointer to ciphertext message.
- *		NEEDS TO BE DYNAMICALLY ALLOCATED!
- *		The memory will be reallocated and used to
- *		store the resulting plaintext.
- *
- * @param2:	uEl_msglen_t ctext_len
- *		- length of ciphertext in bits
- *	
- * @param3:	uEl_msglen_t* len
- *		- pointer to where resulting plaintext
- *		length (in bytes) is to be written. Can be NULL if
- *		this information is not desired.
- *
- * @param4:	uEl_PrivKey privkey
- *		- private key used for decryption
- * _________________________________________________
- * @returns: 0 if there was no error, otherwise flags:
- * 	
- */
-
 uint8_t uEliece_decrypt( uint8_t** msg, uEl_msglen_t ctext_len, uEl_msglen_t* len, const uEl_PrivKey privkey) {
 
 	uint8_t decryption_state = 0; 			// Return value, 0 correct, flags for errors
@@ -86,36 +57,6 @@ uint8_t uEliece_decrypt( uint8_t** msg, uEl_msglen_t ctext_len, uEl_msglen_t* le
 	return decryption_state;
 }
 
-/* 
- * 	Function: uEliece_encrypt
- * ------------------------------- 
- *	This function encrypts given message using the
- *	uEliece cryptosystem with specified public key.
- *	Resulting ciphertext is stored in place of the
- * 	original message.
- * ____________________________________________________
- * @param1:	uint8_t** msg
- *		- pointer to pointer to plaintext message.
- *		the memory will be reallocated and used to
- *		store the resulting ciphertext.
- *
- * @param2:	uint32_t len
- *		- length of plaintext in bits
- *	
- * @param3:	uint32_t* result_len
- *		- pointer to where resulting ciphertext
- *		length is to be written. Can be NULL if
- *		this information is not desired.
- *
- * @param4:	uEl_PubKey pubkey (see uEliece-utils.h)
- *		- public key used for encryption
- *
- * @param5:	const uEl_rng rng
- *		- random number generator, NULL for default if defined
- * ____________________________________________________
- * @returns:	0 if successful
- *
- */
 uint8_t uEliece_encrypt( uint8_t** msg, uEl_msglen_t len, uEl_msglen_t* result_len, uEl_PubKey pubkey, const uEl_rng rng ) {
 	
 	uint8_t encryption_state = 0; 			// Return value, 0 correct, flags for errors
@@ -193,18 +134,17 @@ uint16_t uEliece_count_upc( uint8_t* msg, const uEl_PrivKey privkey, const uEl_M
 	return n_upc;
 }
 
-	/*** 2.1 QC-MDPC Decoding algorithms
+	/*** 2.1 QC-MDPC Decoding algorithms - functions
 	 ***/
 
-/* 
- * uEliece_decode_bf1
- * Bit flipping algorithm, variant 1
- * 
- */
 uint8_t uEliece_decode_bf1( uint8_t* msg, const uEl_PrivKey privkey ) {
 
 	uint8_t return_state = 0; 			// Return value, 0 correct, flags for errors
 	uint16_t i, j, k;
+
+
+	const uint8_t max_iterations = 13;
+	const uint8_t flip_thresh[] = {43, 42, 41, 40, 39, 45, 44, 43, 42, 47, 46, 45};
 
 	uEl_Mbits msg_syndrome;
 	return_state |= uEliece_syndrome(msg, privkey, msg_syndrome);
@@ -212,7 +152,7 @@ uint8_t uEliece_decode_bf1( uint8_t* msg, const uEl_PrivKey privkey ) {
 	uint16_t n_upc;
 	uint8_t syndromeZero;
 	uint32_t rotated_index;
-	for (i=0;i<UEL_BFA_MAX;i++) {
+	for (i=0;i<max_iterations;i++) {
 
 		syndromeZero=1;
 		for (j=0;j<(UEL_M_PADDED/8);j++)
@@ -225,7 +165,7 @@ uint8_t uEliece_decode_bf1( uint8_t* msg, const uEl_PrivKey privkey ) {
 		
 		for (j=0;j<UEL_MDPC_M;j++) {
 			n_upc = uEliece_count_upc(msg, privkey, msg_syndrome, j);
-			if (n_upc >= uel_bfa_flip_thresh[i]) {
+			if (n_upc >= flip_thresh[i]) {
 				msg[(j/8)] ^= 1<<(j%8);
 				for (k=0;k<(UEL_MDPC_W/UEL_MDPC_N0);k++) {
 					rotated_index = ((UEL_MDPC_M - privkey[0][k] + j )% UEL_MDPC_M );
@@ -246,7 +186,7 @@ uint8_t uEliece_decode_bf1( uint8_t* msg, const uEl_PrivKey privkey ) {
 			if (syndromeZero)
 				break;
 			n_upc = uEliece_count_upc(msg, privkey, msg_syndrome, j + UEL_MDPC_M);
-			if (n_upc >= uel_bfa_flip_thresh[i]) {
+			if (n_upc >= flip_thresh[i]) {
 				msg[(UEL_M_PADDED/8)+(j/8)] ^= 1<<(j%8);
 				for (k=0;k<(UEL_MDPC_W/UEL_MDPC_N0);k++) {
 					rotated_index = ((UEL_MDPC_M - privkey[1][k] + j )% UEL_MDPC_M );
@@ -262,6 +202,40 @@ uint8_t uEliece_decode_bf1( uint8_t* msg, const uEl_PrivKey privkey ) {
 					break;	
 				}
 			}
+		}
+	}
+
+	if (!syndromeZero) {
+		return_state |= UEL_DECODE_FAIL;
+	}
+	return return_state;
+}
+
+uint8_t uEliece_decode_bf2( uint8_t* msg, const uEl_PrivKey privkey ) {
+
+	uint8_t return_state = 0; 			// Return value, 0 correct, flags for errors
+	uint16_t i, j, k;
+
+	uEl_Mbits msg_syndrome;
+	return_state |= uEliece_syndrome(msg, privkey, msg_syndrome);
+
+	uint16_t n_upc;
+	uint8_t syndromeZero;
+	uint32_t rotated_index;
+
+	for (i=0;i<UEL_BFA_MAX;i++) {
+
+		syndromeZero=1;
+		for (j=0;j<(UEL_M_PADDED/8);j++)
+			if (msg_syndrome[j]!=0x00) {
+				syndromeZero=0;
+				break;
+			}
+		if (syndromeZero)
+			break;
+		
+		for (j=0;j<UEL_MDPC_N;j++) {
+			
 		}
 	}
 
