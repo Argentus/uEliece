@@ -1,15 +1,17 @@
-language: c++
+language: c
 
-compiler: gcc
+compiler:
+  - gcc
+  - g++
 
 build:
   pre_ci:
     - make -C ./keygen/
- 
+
   ci:
     - make -C ./libuEliece/ x64-linux
     - make -C ./libuEliece/ x64-windows
- 
+
   post_ci:
     - make -C ./tests/encdectest/
     - ./keygen/uEl-keygen -B
