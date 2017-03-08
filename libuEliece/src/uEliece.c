@@ -269,9 +269,11 @@ uint8_t uEliece_unwrap( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len)
 	/* 
 	 * Init PRNG with session key
 	 */
-	uEl_256bit PRNG_state;
-	for (i=0;i<32;i++)
-		PRNG_state[i] = sskey[i] ;
+	hashState PRNG_state;
+	Init(&PRNG_state);
+	Update(&PRNG_state, sskey, 256);
+	StartOutput(&PRNG_state);
+	int stateOffset = 0;
 	
 	/* 
 	 * Decrypt message by 256-bit blocks
@@ -280,8 +282,7 @@ uint8_t uEliece_unwrap( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len)
 
 	for (i=0;i<full_blocks_to_decrypt;i++)
 	{
-		crypto_hash( (unsigned char*) key, (unsigned char*) PRNG_state, 256/8 );
-		PRNG_state[0]++;			// !!!!!!!!!!!!!!!!! PLACEHOLDER !!!!!!!!!!!!
+		SqueezeHash(&PRNG_state, key, 256/8, &stateOffset);
 		for (j=0;j<32;j++)
 			msg[(32*i)+j] ^= key[j] ;
 	}
@@ -289,8 +290,7 @@ uint8_t uEliece_unwrap( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len)
 	uint8_t remaining_bits_to_decrypt = (ctext_len - UEL_MDPC_M - 256)%256;
 	const uint8_t remaining_full_bytes_to_decrypt = remaining_bits_to_decrypt/8;
 
-	crypto_hash( (unsigned char*) key, (unsigned char*) PRNG_state, 256/8 );
-	PRNG_state[0]++;			// !!!!!!!!!!!!!!!!! PLACEHOLDER !!!!!!!!!!!!
+	SqueezeHash(&PRNG_state, key, 256/8, &stateOffset);
 	for (i = 0; i<remaining_full_bytes_to_decrypt; i++)
 		msg[(32*full_blocks_to_decrypt)+i] ^= key[i];
 
@@ -408,12 +408,15 @@ uint8_t uEliece_wrap( uint8_t* msg, uEl_msglen_t len, uEl_msglen_t* result_len, 
 	rng->getRandom(sskey, 32);
 	rng->closeRandom();
 
+	
 	/* 
 	 * Init PRNG with session key
 	 */
-	uEl_256bit PRNG_state;
-	for (i=0;i<32;i++)
-		PRNG_state[i] = sskey[i] ;
+	hashState PRNG_state;
+	Init(&PRNG_state);
+	Update(&PRNG_state, sskey, 256);
+	StartOutput(&PRNG_state);
+	int stateOffset = 0;
 	
 	/* 
 	 * Encrypt message by 256-bit blocks
@@ -424,8 +427,8 @@ uint8_t uEliece_wrap( uint8_t* msg, uEl_msglen_t len, uEl_msglen_t* result_len, 
 
 	for (i=0;i<full_blocks_to_encrypt;i++)
 	{
-		crypto_hash( (unsigned char*) key, (unsigned char*) PRNG_state, 256/8 );
-		PRNG_state[0]++;			// !!!!!!!!!!!!!!!!! PLACEHOLDER !!!!!!!!!!!!
+		
+		SqueezeHash(&PRNG_state, key, 256/8, &stateOffset);
 		for (j=0;j<32;j++)
 			msg[(32*i)+j] ^= key[j] ;
 	}
@@ -433,8 +436,8 @@ uint8_t uEliece_wrap( uint8_t* msg, uEl_msglen_t len, uEl_msglen_t* result_len, 
 	uint8_t remaining_bits_to_encrypt = ((ctext_len_bytes*8) - UEL_M_PADDED - 256 - 8)%256;
 	const uint8_t remaining_full_bytes_to_encrypt = remaining_bits_to_encrypt/8;
 
-	crypto_hash( (unsigned char*) key, (unsigned char*) PRNG_state, 256/8 );
-	PRNG_state[0]++;			// !!!!!!!!!!!!!!!!! PLACEHOLDER !!!!!!!!!!!!
+
+	SqueezeHash(&PRNG_state, key, 256/8, &stateOffset);
 	for (i = 0; i<remaining_full_bytes_to_encrypt; i++)
 		msg[(32*full_blocks_to_encrypt)+i] ^= key[i];
 
