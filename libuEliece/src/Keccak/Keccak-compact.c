@@ -9,6 +9,8 @@ hereby denoted as "the implementer".
 To the extent possible under law, the implementer has waived all copyright
 and related or neighboring rights to the source code in this file.
 http://creativecommons.org/publicdomain/zero/1.0/
+
+Some functions at the end of file added by Radovan Bezak.
 */
 
 
@@ -16,7 +18,6 @@ http://creativecommons.org/publicdomain/zero/1.0/
 #include "Keccak-compact-settings.h"
 #include "Keccak-compact.h"
 #define cKeccakR_SizeInBytes    (cKeccakR / 8)
-#include "crypto_hash.h"
 #ifndef crypto_hash_BYTES
     #ifdef cKeccakFixedOutputLengthInBytes
         #define crypto_hash_BYTES cKeccakFixedOutputLengthInBytes
@@ -337,5 +338,68 @@ HashReturn Final(hashState *state, BitSequence *hashval, int hashbytelen)
 	}
 
 	state->bitsInQueue = -1;	/* flag final state */
+	return ( SUCCESS );
+}
+
+/*
+ *	Functions added by Radovan Bezak to allow programs to get output multiple times 
+ */
+
+HashReturn StartOutput(hashState *state)
+{
+	if ( state->bitsInQueue < 0 )
+	{
+		/*	 Final() already called.	*/
+		return ( FAIL );
+	}
+
+	// Padding
+	if (state->bitsInQueue + 1 == cKeccakR_SizeInBytes*8) {
+		state->state[cKeccakR_SizeInBytes-1] ^= 0x80;
+		KeccakF( (tKeccakLane *)state->state, 0, 0 );
+	}
+	else {
+		state->state[state->bitsInQueue/8] ^= 1 << (state->bitsInQueue % 8);
+	}
+	state->state[cKeccakR_SizeInBytes-1] ^= 0x80;
+	KeccakF( (tKeccakLane *)state->state, 0, 0 );
+
+	return ( SUCCESS );
+}
+
+HashReturn SqueezeHash(hashState *state, BitSequence *hashval, int hashbytelen, int * stateOffset)
+{
+	tSmallUInt	i;
+
+    // Output
+	for ( /* empty */; hashbytelen != 0; hashval += i, hashbytelen -= i )
+	{
+		i = (hashbytelen < cKeccakR_SizeInBytes) ? hashbytelen : (cKeccakR_SizeInBytes - *stateOffset);
+
+		#if (PLATFORM_BYTE_ORDER == IS_LITTLE_ENDIAN) || (cKeccakB == 200)
+
+		memcpy( hashval, state->state + *stateOffset, i );
+
+		#else
+
+		for ( offset = 0; offset < i; offset += sizeof(tKeccakLane) )
+		{
+			tSmallUInt j;
+
+			for ( j = 0; j < sizeof(tKeccakLane); ++j )
+			{
+				hashval[offset + j] = state->state[offset + (sizeof(tKeccakLane) - 1) - j];
+			}
+		}
+
+		#endif
+
+		if ( i != hashbytelen )
+		{
+			KeccakF( (tKeccakLane *)state->state, 0, 0 );
+			*stateOffset = 0;
+		}
+	}
+
 	return ( SUCCESS );
 }

@@ -15,7 +15,7 @@ build/uEliece.o: ../src/uEliece.c ../src/uEliece.h ../src/uEliece-settings.h
 	mkdir -p build
 	$(CC) $(CFLAGS) $(CDEFINES) -c -o build/uEliece.o ../src/uEliece.c
 
-build/uEliece_Keccak.o: ../src/Keccak/$(KECCAK).c ../src/Keccak/$(KECCAK).h ../src/Keccak/$(KECCAK)-settings.h ../src/Keccak/crypto_hash.h
+build/uEliece_Keccak.o: ../src/Keccak/$(KECCAK).c ../src/Keccak/$(KECCAK).h ../src/Keccak/$(KECCAK)-settings.h
 	mkdir -p build
 	$(CC) $(CFLAGS) $(CDEFINES) -c -o build/uEliece_Keccak.o ../src/Keccak/$(KECCAK).c
 	
