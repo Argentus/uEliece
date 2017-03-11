@@ -47,4 +47,10 @@ HashReturn Update(hashState *state, const BitSequence *data, DataLength databitl
 
 HashReturn Final(hashState *state, BitSequence *hashval, int hashbytelen);
 
+// Functions added by radobezak
+
+HashReturn StartOutput(hashState *state);
+
+HashReturn SqueezeHash(hashState *state, BitSequence *hashval, int hashbytelen, int * stateOffset);
+
 #endif
