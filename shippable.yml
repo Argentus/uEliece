@@ -5,14 +5,12 @@ compiler:
   - g++
 
 build:
-  pre_ci:
-    - make -C ./keygen/
-
   ci:
     - make -C ./libuEliece/ x64-linux
     - make -C ./libuEliece/ x64-windows
+    - make -C ./libuEliece/.build-x64-linux release
+    - make -C ./libuEliece/.build-x64-windows release
 
   post_ci:
     - make -C ./tests/encdectest/
-    - ./keygen/uEl-keygen -B
-    - ./tests/encdectest/build/encdectest/
+    - ./tests/run_encdectest.py
