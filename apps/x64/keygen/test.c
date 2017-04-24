@@ -40,7 +40,7 @@ int OgetDegree(int euclid[]) {
         }
     }
 
-    return -1;
+    return 0;
 }
 
 
@@ -85,8 +85,8 @@ int main(void)
     //memcpy(vys, sec, sizeof(vys));
 
     printBits(arr);
-    SetBit(arr, 0);
-    printf("A: %d \n", getDegree(arr));
+    //SetBit(arr, 0);
+    printf("A: %d \n", OgetDegree(arr));
     //printBits(vys);
 	//shiftPolynomial(sec, vys, getDegree(arr) - getDegree(sec));
 	//printBits(vys);

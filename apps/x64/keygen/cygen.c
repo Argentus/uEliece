@@ -102,7 +102,7 @@ int getDegree(int euclid[]) {
         }
     }
 
-    return -1;
+    return 0;
 }
 
 void addingPolynomials(int augend[], int addend[], int total[]) {
@@ -139,27 +139,39 @@ void dividePolynomials(int divident[], int divisor[], int quotient[], int remain
     memcpy(tempDivident, divident, sizeof(tempDivident));
 
     while(1) {
+        // printf("%s\n", "tempDivident");
+        // printBits(tempDivident);
+
         degreeOfDivident = getDegree(tempDivident);
         degreeOfDivisor = getDegree(divisor);
 
-        if((degreeOfDivident == -1) || (degreeOfDivisor == -1) )
-            exit(EXIT_FAILURE);
+        //printf("%d %d\n", degreeOfDivident, degreeOfDivisor);
+
+        if(degreeOfDivident < degreeOfDivisor) {
+            memcpy(remainder, tempDivident, sizeof(tempDivident));
+
+            return;
+        }
+
+
 
         shiftPolynomial(divisor, tempDivisor, degreeOfDivident - degreeOfDivisor);
+
+        printf("%s\n", "tempDivisor");
+        printBits(tempDivisor);
+
         SetBit(quotient, degreeOfDivident - degreeOfDivisor);
 
         memcpy(dividentHolder, tempDivident, sizeof(tempDivident));
         memset(tempDivident, 0, sizeof(tempDivident));
         addingPolynomials(dividentHolder, tempDivisor, tempDivident);
 
-        if(degreeOfDivident <= degreeOfDivisor) {
-            memcpy(remainder, tempDivident, sizeof(tempDivident));
 
-            return;
-        }
 
-        memset(tempDivisor, 0, sizeof(tempDivisor));
-        memset(dividentHolder, 0, sizeof(dividentHolder));
+
+
+        // memset(tempDivisor, 0, sizeof(tempDivisor));
+        // memset(dividentHolder, 0, sizeof(dividentHolder));
 
     }
 
@@ -188,19 +200,11 @@ void euclidAlgorithm(int ***euclid) {
 
     // printf("TOTO : %d \n", getDegree((*euclid)[2]));
 
-    printf("%s\n", "asd");
-
     allocMemory(euclid);
     SetBit((*euclid)[0],0);
     SetBit((*euclid)[0],1);
-    SetBit((*euclid)[0],3);
-    SetBit((*euclid)[0],4);
-    SetBit((*euclid)[0],8);
     allocMemory(euclid);
     SetBit((*euclid)[1],0);
-    SetBit((*euclid)[1],1);
-    SetBit((*euclid)[1],4);
-    SetBit((*euclid)[1],6);
     allocMemory(euclid);
     allocMemory(euclid);
     dividePolynomials((*euclid)[0], (*euclid)[1], (*euclid)[2], (*euclid)[3]);
