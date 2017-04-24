@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
 #define X 9857
 #define w0 71
@@ -21,6 +22,17 @@ void printArray(int arr[], int size) {
         printf("%d ", arr[i]);
     }
     putc('\n', stdout);
+}
+
+void printBits(int pol[]) {
+    int i;
+
+    for(int i = 0; i < bytes * 32; i++) {
+        printf("%d", TestBit(pol,i));
+        if(i % 31 == 0 && i != 0)
+            printf(" ");
+    }
+    printf("\n");
 }
 
 void generateIndexes(int indexes[]) {
@@ -81,16 +93,76 @@ int getDegree(int euclid[]) {
     int i, j;
 
     for(i = bytes - 1; i >= 0; i--) {
-        printf("I:%d:[%d] ", i, euclid[i]);
         if(euclid[i]) {
             for(j = 32 -1; j >= 0; j--) {
-                printf("J:%d:[%d] ", j, euclid[i]);
                 if(TestBit(&(euclid[i]),j)) {
                     return j + 32*(i) + 1;
                 }
             }
         }
     }
+
+    return -1;
+}
+
+void addingPolynomials(int augend[], int addend[], int total[]) {
+    int i;
+
+    for(i = 0; i < bytes; i++) {
+        total[i] = augend[i] ^ addend[i];
+    }
+}
+
+void shiftPolynomial(int originPoly[], int shiftedPoly[], int shift) {
+    /**TODO: This function could be done much faster in assembly
+        or after checking 32bit integer, test 16bit integer, then 8bit
+        etc to speed it up**/
+    int i, j;
+
+    for(i = 0; i < bytes; i++) {
+        if(originPoly[i]) {
+            for(j = 0; j < 32; j++) {
+                if(TestBit(originPoly + i,j))
+                    SetBit(shiftedPoly, j + shift);
+            }
+        }
+    }
+}
+
+void dividePolynomials(int divident[], int divisor[], int quotient[], int remainder[]) {
+    //N, divident/tempDivident - divident will change, we want to keep original divident
+    //D, divisor/tempDivisor - divisor is going to be shifted, we want to keep original divisor
+    //q, quotient - quotient
+    //r, remainder - remainder
+    int degreeOfDivident, degreeOfDivisor, tempDivisor[bytes] = {0}, tempDivident[bytes] = {0}, dividentHolder[bytes] = {0};
+
+    memcpy(tempDivident, divident, sizeof(tempDivident));
+
+    while(1) {
+        degreeOfDivident = getDegree(tempDivident);
+        degreeOfDivisor = getDegree(divisor);
+
+        if((degreeOfDivident == -1) || (degreeOfDivisor == -1) )
+            exit(EXIT_FAILURE);
+
+        shiftPolynomial(divisor, tempDivisor, degreeOfDivident - degreeOfDivisor);
+        SetBit(quotient, degreeOfDivident - degreeOfDivisor);
+
+        memcpy(dividentHolder, tempDivident, sizeof(tempDivident));
+        memset(tempDivident, 0, sizeof(tempDivident));
+        addingPolynomials(dividentHolder, tempDivisor, tempDivident);
+
+        if(degreeOfDivident <= degreeOfDivisor) {
+            memcpy(remainder, tempDivident, sizeof(tempDivident));
+
+            return;
+        }
+
+        memset(tempDivisor, 0, sizeof(tempDivisor));
+        memset(dividentHolder, 0, sizeof(dividentHolder));
+
+    }
+
 }
 
 void euclidAlgorithm(int ***euclid) {
@@ -98,22 +170,46 @@ void euclidAlgorithm(int ***euclid) {
 
     srand(time(NULL));
 
-    generateIndexes(indexes);
-    printArray(indexes, w0);
-    allocMemory(euclid);
-    createPolynomial(indexes, (*euclid)[0]);
-    putc('\n', stdout);
-    printArray((*euclid)[0], bytes);
-    putc('\n', stdout);
-    allocMemory(euclid);
-    SetBit((*euclid)[1], X);
-    SetBit((*euclid)[1], 0);   
-    printArray((*euclid)[1], bytes);
+
+    // generateIndexes(indexes);
+    // printArray(indexes, w0);
+    // allocMemory(euclid);
+    // createPolynomial(indexes, (*euclid)[0]);
+    // putc('\n', stdout);
+    // printArray((*euclid)[0], bytes);
+    // putc('\n', stdout);
+    // allocMemory(euclid);
+    // SetBit((*euclid)[1], X);
+    // SetBit((*euclid)[1], 0);
+    // printArray((*euclid)[1], bytes);
+
+    // allocMemory(euclid);
+    // (*euclid)[2][0] = 3;
+
+    // printf("TOTO : %d \n", getDegree((*euclid)[2]));
+
+    printf("%s\n", "asd");
 
     allocMemory(euclid);
-    (*euclid)[2][0] = 3;
+    SetBit((*euclid)[0],0);
+    SetBit((*euclid)[0],1);
+    SetBit((*euclid)[0],3);
+    SetBit((*euclid)[0],4);
+    SetBit((*euclid)[0],8);
+    allocMemory(euclid);
+    SetBit((*euclid)[1],0);
+    SetBit((*euclid)[1],1);
+    SetBit((*euclid)[1],4);
+    SetBit((*euclid)[1],6);
+    allocMemory(euclid);
+    allocMemory(euclid);
+    dividePolynomials((*euclid)[0], (*euclid)[1], (*euclid)[2], (*euclid)[3]);
 
-    printf("TOTO : %d \n", getDegree((*euclid)[2]));
+    printf("%s\n", "asd");
+
+    printBits((*euclid)[2]);
+    printf("%s\n", "______________");
+    printBits((*euclid)[3]);
 }
 
 
