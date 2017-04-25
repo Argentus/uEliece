@@ -35,6 +35,15 @@ void printBits(int pol[]) {
     printf("\n");
 }
 
+void printReadableBits(int arr[], int size) {
+	int i;
+
+    for(i = 0; i < size; i++) {
+        if(TestBit(arr, i))
+			printf("x%d ", i);
+    }
+}
+
 void generateIndexes(int indexes[]) {
     int i, num;
     unsigned int mask[bytes] = {0};
@@ -139,42 +148,23 @@ void dividePolynomials(int divident[], int divisor[], int quotient[], int remain
     memcpy(tempDivident, divident, sizeof(tempDivident));
 
     while(1) {
-        // printf("%s\n", "tempDivident");
-        // printBits(tempDivident);
-
-        degreeOfDivident = getDegree(tempDivident);
+        degreeOfDivident = getDegree(tempDivident); //get degree of divident/divisor
         degreeOfDivisor = getDegree(divisor);
 
-        //printf("%d %d\n", degreeOfDivident, degreeOfDivisor);
-
-        if(degreeOfDivident < degreeOfDivisor) {
+        if(degreeOfDivident < degreeOfDivisor) {  //check wheter division is applicable
             memcpy(remainder, tempDivident, sizeof(tempDivident));
 
             return;
         }
 
-
-
-        shiftPolynomial(divisor, tempDivisor, degreeOfDivident - degreeOfDivisor);
-
-        printf("%s\n", "tempDivisor");
-        printBits(tempDivisor);
-
-        SetBit(quotient, degreeOfDivident - degreeOfDivisor);
-
-        memcpy(dividentHolder, tempDivident, sizeof(tempDivident));
-        memset(tempDivident, 0, sizeof(tempDivident));
-        addingPolynomials(dividentHolder, tempDivisor, tempDivident);
-
-
-
-
-
-        // memset(tempDivisor, 0, sizeof(tempDivisor));
-        // memset(dividentHolder, 0, sizeof(dividentHolder));
-
+        shiftPolynomial(divisor, tempDivisor, degreeOfDivident - degreeOfDivisor); //shift divisor to divident degree
+        SetBit(quotient, degreeOfDivident - degreeOfDivisor); //set the difference between divisor and divident degree to quotient
+        memcpy(dividentHolder, tempDivident, sizeof(tempDivident)); //tempDivident stores result of adding polynomials, so safe current tempDivident
+        memset(tempDivident, 0, sizeof(tempDivident)); //clear tempDivident
+        addingPolynomials(dividentHolder, tempDivisor, tempDivident); //add divident and divisor (substraction = addition in GF2)
+        memset(tempDivisor, 0, sizeof(tempDivisor)); //clear tempDivisor
+        memset(dividentHolder, 0, sizeof(dividentHolder)); //clear dividentHolder
     }
-
 }
 
 void euclidAlgorithm(int ***euclid) {
@@ -203,17 +193,29 @@ void euclidAlgorithm(int ***euclid) {
     allocMemory(euclid);
     SetBit((*euclid)[0],0);
     SetBit((*euclid)[0],1);
+    //SetBit((*euclid)[0],3);
+    //SetBit((*euclid)[0],1);
+    //SetBit((*euclid)[0],0);
     allocMemory(euclid);
+    //SetBit((*euclid)[1],6);
+    //SetBit((*euclid)[1],4);
+    //SetBit((*euclid)[1],1);
     SetBit((*euclid)[1],0);
     allocMemory(euclid);
     allocMemory(euclid);
     dividePolynomials((*euclid)[0], (*euclid)[1], (*euclid)[2], (*euclid)[3]);
 
-    printf("%s\n", "asd");
+    printf("[");
+    printReadableBits((*euclid)[0], 10);
+    printf("%s", "] : [");
+    printReadableBits((*euclid)[1], 10);
+    printf("]");
 
-    printBits((*euclid)[2]);
-    printf("%s\n", "______________");
-    printBits((*euclid)[3]);
+    printf("%s", " = [");
+    printReadableBits((*euclid)[2], 10);
+    printf("%s ", "] zv. [");
+    printReadableBits((*euclid)[3], 10);
+    printf("]\n");
 }
 
 
