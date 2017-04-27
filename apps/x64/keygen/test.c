@@ -56,21 +56,44 @@ void printBits(int pol[]) {
 }
 
 void shiftPolynomial(int originPoly[], int shiftedPoly[], int shift) {
-	/**TODO: This function could be done much faster in assembly
-		or after checking 32bit integer, test 16bit integer, then 8bit
-		etc to speed it up**/
-	int i, j;
+    //test 16bit integer, then 8bit etc to speed it up
+    int i, j;
 
-	for(i = 0; i < bytes; i++) {
-		if(originPoly[i]) {
-			for(j = 0; j < 32; j++) {
-				if(TestBit(originPoly + i,j))
-					SetBit(shiftedPoly, j + shift);
-			}
-		}
-	}
+    for(i = 0; i < bytes; i++) {
+        if(originPoly[i]) {
+            for(j = 0; j < 32; j++) {
+                if(TestBit(originPoly + i,j))
+                    SetBit(shiftedPoly, j + shift);
+            }
+        }
+    }
 }
 
+void addingPolynomials(int augend[], int addend[], int total[]) {
+    int i;
+
+    for(i = 0; i < bytes; i++) {
+        total[i] = augend[i] ^ addend[i];
+    }
+}
+
+
+void multiplePolynomials(int multiplier[], int multiplicant[], int product[]) {
+  //TODO Russian Peasant Multiplication algorithm
+  //TODO the same as in dividePolynomials, shift no needed, just add with offset
+  int i, j, tempMultiplier[bytes] = {0};
+    for(i = 0; i < bytes; i++) {
+        if(multiplicant[i]) {
+            for(j = 0; j < 32; j++) {
+                if(TestBit(multiplicant + i,j)) {
+                  shiftPolynomial(multiplier, tempMultiplier, (i+1)*j);
+                  addingPolynomials(product, tempMultiplier, product);
+                  memset(tempMultiplier, 0, sizeof(tempMultiplier));
+                }
+            }
+        }
+    }
+}
 
 
 int main(void)
@@ -84,9 +107,6 @@ int main(void)
     //sec[0] = 3;
     //memcpy(vys, sec, sizeof(vys));
 
-    printBits(arr);
-    //SetBit(arr, 0);
-    printf("A: %d \n", OgetDegree(arr));
     //printBits(vys);
 	//shiftPolynomial(sec, vys, getDegree(arr) - getDegree(sec));
 	//printBits(vys);
@@ -94,6 +114,16 @@ int main(void)
 	//printBits(q);
 	//printf("%d %d %d %d %d %d %d %d %d %d \n", arr[0],arr[1],arr[2],arr[3],arr[4],arr[5],arr[6],arr[7],arr[8],arr[9]);
 	//printBits(arr);
+
+    arr[0] = 53;
+    sec[0] = 3;
+    multiplePolynomials(arr, sec, vys);
+    printBits(arr);
+    printf("%s\n", "ads");
+    printBits(sec);
+    printf("%s\n", "ads");
+    printBits(vys);
+
 
 
     return 0;
