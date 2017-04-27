@@ -77,7 +77,6 @@ void addingPolynomials(int augend[], int addend[], int total[]) {
     }
 }
 
-
 void multiplePolynomials(int multiplier[], int multiplicant[], int product[]) {
   //TODO Russian Peasant Multiplication algorithm
   //TODO the same as in dividePolynomials, shift no needed, just add with offset
