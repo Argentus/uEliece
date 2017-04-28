@@ -101,25 +101,25 @@ void allocMemory(int ***euclid) {
     count++;
 }
 
-void allocSecondaryMemory(int ***euclid) {
+void allocSecondaryMemory() {
     static int max = 0;
 
     if (secondaryCount == max) {
         int newmax = (max + 2) * 2;   /* 4, 12, 28, 60, ... */
-        int **newptr = (int **)realloc(*euclid, newmax * sizeof(*euclid));
+        int **newptr = (int **)realloc(*bezout, newmax * sizeof(*bezout));
 
         if (newptr == NULL) {
-            freeMemory(*euclid, secondaryCount);
+            freeMemory(bezout, secondaryCount);
             exit(EXIT_FAILURE);
         }
         max = newmax;
-        *euclid = newptr;
+        bezout = newptr;
     }
 
-    (*euclid)[secondaryCount] = (int *)calloc(bytes, sizeof(int));
+    (bezout)[secondaryCount] = (int *)calloc(bytes, sizeof(int));
 
-    if ((*euclid)[secondaryCount] == 0) {
-        freeMemory(*euclid, secondaryCount);
+    if ((bezout)[secondaryCount] == 0) {
+        freeMemory(bezout, secondaryCount);
         exit(EXIT_FAILURE);
     }
 
@@ -325,28 +325,31 @@ void euclidAlgorithm(int ***euclid) { //TODO RETURN position of 1 polynomial
     }
 }
 
-int **compose(int id, int **euclid) {
+int *compose(int id, int **euclid) {
 	int resultOfAddition[bytes] = {0}, resultOfMultiplication[bytes] = {0};
 
+	printf("ID:%d\n", id);
+	printReadableBits(euclid[-6], 10);
 	switch(id) {
 		case 2:
-			return &one;
+			return one;
 		case 3:
-			return euclid - 1;       
+			return *(euclid - 1);       
 		case 4:
-			multiplePolynomials(euclid - 1, euclid - 3, resultOfMultiplication);
-			addingPolynomials(&one, resultOfMultiplication, resultOfAddition);
+			multiplePolynomials(*(euclid - 1), *(euclid - 3), resultOfMultiplication);
+			addingPolynomials(one, resultOfMultiplication, resultOfAddition);
 
-                        allocSecondaryMemory(bezout); //TODO
-                        memcpy((*bezout)[0], resultOfAddition, bytes);
-			return resultOfAddition;
+            allocSecondaryMemory();
+            memcpy(&(*bezout)[0], resultOfAddition, bytes);
+			return &(*bezout)[0];
 		default:
-			multiplePolynomials(compose(id - 1, euclid - 2), euclid - 1, resultOfMultiplication);
+			printf("%s\n","som na zaciatku" );
+			multiplePolynomials(compose(id - 1, euclid - 2), *(euclid - 1), resultOfMultiplication);
 			addingPolynomials(compose(id - 2, euclid - 4), resultOfAddition, resultOfAddition);
 
-                        allocSecondaryMemory(bezout);
-                        memcpy((*bezout)[id - 4], resultOfAddition, bytes);
-			return resultOfAddition;
+            allocSecondaryMemory();
+            memcpy(&(*bezout)[id - 4], resultOfAddition, bytes);
+			return &(*bezout)[id - 4];
 	}
 
 
@@ -357,7 +360,8 @@ int main() {
     SetBit(one, 0);
 
     euclidAlgorithm(&euclid);
-    compose(5, euclid[7]);
+    //printReadableBits(euclid[0],10);
+    compose(5, euclid + 6); //euclid[7]
 
     freeMemory(euclid, count);
     freeMemory(bezout, secondaryCount);

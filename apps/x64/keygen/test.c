@@ -94,6 +94,9 @@ void multiplePolynomials(int multiplier[], int multiplicant[], int product[]) {
     }
 }
 
+void test(int *a) {
+    printf("EQW: %d\n", a[0]);
+}
 
 int main(void)
 {
@@ -123,7 +126,9 @@ int main(void)
     printf("%s\n", "ads");
     printBits(vys);
 
-
+    q[5] = 6;
+    q[0] = 2;
+    test(q+5);
 
     return 0;
 }
