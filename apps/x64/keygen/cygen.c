@@ -222,21 +222,21 @@ int checkZeroPolynomial(int pol[]) {
     return 1;
 }
 
-void euclidAlgorithm(int ***euclid) { //TODO RETURN position of 1 polynomial
+void euclidAlgorithm(int ***euclid) {
     int indexes[w0], i;
 
     srand(time(NULL));
 
-    // generateIndexes(indexes);
+    generateIndexes(indexes);
     // printArray(indexes, w0);
-    // allocMemory(euclid);
-    // createPolynomial(indexes, (*euclid)[0]);
+    allocMemory(euclid);
+    createPolynomial(indexes, (*euclid)[0]);
     // putc('\n', stdout);
     // printArray((*euclid)[0], bytes);
     // putc('\n', stdout);
-    // allocMemory(euclid);
-    // SetBit((*euclid)[1], X);
-    // SetBit((*euclid)[1], 0);
+    allocMemory(euclid);
+    SetBit((*euclid)[1], X);
+    SetBit((*euclid)[1], 0);
     // printArray((*euclid)[1], bytes);
 
     // allocMemory(euclid);
@@ -290,7 +290,7 @@ void euclidAlgorithm(int ***euclid) { //TODO RETURN position of 1 polynomial
 	allocMemory(euclid);
 	allocMemory(euclid);
 	dividePolynomials((*euclid)[0], (*euclid)[1], (*euclid)[2], (*euclid)[3]);
-	*/
+
 
     
     allocMemory(euclid);
@@ -304,11 +304,12 @@ void euclidAlgorithm(int ***euclid) { //TODO RETURN position of 1 polynomial
     SetBit((*euclid)[1],4);
     SetBit((*euclid)[1],1);
     SetBit((*euclid)[1],0);
+    */
 	allocMemory(euclid);
 	allocMemory(euclid);
 	dividePolynomials((*euclid)[0], (*euclid)[1], (*euclid)[2], (*euclid)[3]);
-	
-
+		
+	/* printing progress
     printf("[");
     printReadableBits((*euclid)[0], 10);
     printf("%s", "] : [");
@@ -320,7 +321,7 @@ void euclidAlgorithm(int ***euclid) { //TODO RETURN position of 1 polynomial
     printf("%s ", "] zv. [");
     printReadableBits((*euclid)[3], 10);
     printf("]\n");
-
+	*/
 	i = 1;
 
     while(!checkZeroPolynomial((*euclid)[i+2])) {
@@ -328,7 +329,7 @@ void euclidAlgorithm(int ***euclid) { //TODO RETURN position of 1 polynomial
 		allocMemory(euclid);
 		dividePolynomials((*euclid)[i+0], (*euclid)[i+2], (*euclid)[i+3], (*euclid)[i+4]);
 
-		//printing progress
+		/*printing progress
 	    printf("[");
 	    printReadableBits((*euclid)[i+0], 10);
 	    printf("%s", "] : [");
@@ -340,7 +341,7 @@ void euclidAlgorithm(int ***euclid) { //TODO RETURN position of 1 polynomial
 	    printf("%s ", "] zv. [");
 	    printReadableBits((*euclid)[i+4], 10);
 	    printf("]\n");
-
+		*/
 		i+=2; 	
     }
 }
@@ -378,6 +379,9 @@ int main() {
     int *p;
 
     euclidAlgorithm(&euclid);
+
+
+    /*
     //printReadableBits(euclid[0],10);
     p = compose(3 + ((count-1-2) -3)/2, euclid + count - 1 - 2);
     //first argument describe dependency between array index and Fx position
@@ -385,9 +389,10 @@ int main() {
     printf("%s\n", "RESULT:");
     printReadableBits(p, 10);
     printf("\n");
+	*/
 
     freeMemory(euclid, count);
-    freeMemory(bezout, secondaryCount);
+    //freeMemory(bezout, secondaryCount);
     
     return 0;
 }
