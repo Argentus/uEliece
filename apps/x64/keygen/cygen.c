@@ -106,7 +106,7 @@ void allocSecondaryMemory() {
 
     if (secondaryCount == max) {
         int newmax = (max + 2) * 2;   /* 4, 12, 28, 60, ... */
-        int **newptr = (int **)realloc(*bezout, newmax * sizeof(*bezout));
+        int **newptr = (int **)realloc(bezout, newmax * sizeof(*bezout));
 
         if (newptr == NULL) {
             freeMemory(bezout, secondaryCount);
@@ -329,23 +329,45 @@ int *compose(int id, int **euclid) {
 	int resultOfAddition[bytes] = {0}, resultOfMultiplication[bytes] = {0};
 
 	printf("ID:%d\n", id);
-	printReadableBits(euclid[-6], 10);
+	printReadableBits(euclid[0], 10);
+	printf("\n%s\n", "...........");
 	switch(id) {
 		case 2:
 			return one;
 		case 3:
+			printf("%s\n","result 2" );
+			printReadableBits(euclid[-1], 10);
+			printf("\n");
 			return *(euclid - 1);       
 		case 4:
+			//intf("%s\n","tu padam?" );
 			multiplePolynomials(*(euclid - 1), *(euclid - 3), resultOfMultiplication);
+			printf("%s\n","result multiplikacie z case 4" );
+			printReadableBits(resultOfMultiplication, 10);
+			printf("\n");
 			addingPolynomials(one, resultOfMultiplication, resultOfAddition);
+			printf("%s\n","result resultOfAddition z case 4" );
+			printReadableBits(resultOfAddition, 10);
+			printf("\n");
+
+			/*
+			f1 = f2 * (x2+1) + f3........f3 = f1 + f2 * (x2+1) 	
+			f2 = f3 * (x4+x2) + f4.......f4 = f2 + f3 * (x4+x2)
+			f3 = f4 * (x+1) + f5...........f5 = f3 + f4 * (x+1) 
+			f4 = f5 * (x+1) + f6
+			*/
 
             allocSecondaryMemory();
+            //printf("%s\n", "wtf");
             memcpy(&(*bezout)[0], resultOfAddition, bytes);
 			return &(*bezout)[0];
 		default:
-			printf("%s\n","som na zaciatku" );
+			//printf("%s\n","som na zaciatku" );
 			multiplePolynomials(compose(id - 1, euclid - 2), *(euclid - 1), resultOfMultiplication);
-			addingPolynomials(compose(id - 2, euclid - 4), resultOfAddition, resultOfAddition);
+			printf("%s\n","result multiplikacie z case def" );
+			printReadableBits(resultOfMultiplication, 10);
+			printf("\n");
+			addingPolynomials(compose(id - 2, euclid - 4), resultOfMultiplication, resultOfAddition);
 
             allocSecondaryMemory();
             memcpy(&(*bezout)[id - 4], resultOfAddition, bytes);
@@ -358,10 +380,15 @@ int *compose(int id, int **euclid) {
 int main() {
     int **euclid = 0;
     SetBit(one, 0);
+    int *p;
 
     euclidAlgorithm(&euclid);
     //printReadableBits(euclid[0],10);
-    compose(5, euclid + 6); //euclid[7]
+    p = compose(5, euclid + 7); //euclid[7]
+    printf("%s\n", "RESULT:");
+    printReadableBits(p, 10);
+    printf("\n");
+
 
     freeMemory(euclid, count);
     freeMemory(bezout, secondaryCount);
