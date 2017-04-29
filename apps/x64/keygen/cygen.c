@@ -275,6 +275,24 @@ void euclidAlgorithm(int ***euclid) { //TODO RETURN position of 1 polynomial
     // printf("smejo %d\n", checkZeroPolynomial((*euclid)[3]));
 
     //toto bude na vstupe
+
+
+
+    /*
+    allocMemory(euclid);
+    SetBit((*euclid)[0],5);
+	SetBit((*euclid)[0],2);
+	SetBit((*euclid)[0],0);
+    allocMemory(euclid);
+    SetBit((*euclid)[1],3);
+    SetBit((*euclid)[1],2);
+    SetBit((*euclid)[1],0);
+	allocMemory(euclid);
+	allocMemory(euclid);
+	dividePolynomials((*euclid)[0], (*euclid)[1], (*euclid)[2], (*euclid)[3]);
+	*/
+
+    
     allocMemory(euclid);
     SetBit((*euclid)[0],8);
     SetBit((*euclid)[0],4);
@@ -289,6 +307,7 @@ void euclidAlgorithm(int ***euclid) { //TODO RETURN position of 1 polynomial
 	allocMemory(euclid);
 	allocMemory(euclid);
 	dividePolynomials((*euclid)[0], (*euclid)[1], (*euclid)[2], (*euclid)[3]);
+	
 
     printf("[");
     printReadableBits((*euclid)[0], 10);
@@ -309,6 +328,7 @@ void euclidAlgorithm(int ***euclid) { //TODO RETURN position of 1 polynomial
 		allocMemory(euclid);
 		dividePolynomials((*euclid)[i+0], (*euclid)[i+2], (*euclid)[i+3], (*euclid)[i+4]);
 
+		//printing progress
 	    printf("[");
 	    printReadableBits((*euclid)[i+0], 10);
 	    printf("%s", "] : [");
@@ -328,53 +348,28 @@ void euclidAlgorithm(int ***euclid) { //TODO RETURN position of 1 polynomial
 int *compose(int id, int **euclid) {
 	int resultOfAddition[bytes] = {0}, resultOfMultiplication[bytes] = {0};
 
-	printf("ID:%d\n", id);
-	printReadableBits(euclid[0], 10);
-	printf("\n%s\n", "...........");
 	switch(id) {
 		case 2:
 			return one;
 		case 3:
-			printf("%s\n","result 2" );
-			printReadableBits(euclid[-1], 10);
-			printf("\n");
 			return *(euclid - 1);       
 		case 4:
-			//intf("%s\n","tu padam?" );
 			multiplePolynomials(*(euclid - 1), *(euclid - 3), resultOfMultiplication);
-			printf("%s\n","result multiplikacie z case 4" );
-			printReadableBits(resultOfMultiplication, 10);
-			printf("\n");
 			addingPolynomials(one, resultOfMultiplication, resultOfAddition);
-			printf("%s\n","result resultOfAddition z case 4" );
-			printReadableBits(resultOfAddition, 10);
-			printf("\n");
-
-			/*
-			f1 = f2 * (x2+1) + f3........f3 = f1 + f2 * (x2+1) 	
-			f2 = f3 * (x4+x2) + f4.......f4 = f2 + f3 * (x4+x2)
-			f3 = f4 * (x+1) + f5...........f5 = f3 + f4 * (x+1) 
-			f4 = f5 * (x+1) + f6
-			*/
 
             allocSecondaryMemory();
-            //printf("%s\n", "wtf");
             memcpy(&(*bezout)[0], resultOfAddition, bytes);
+
 			return &(*bezout)[0];
 		default:
-			//printf("%s\n","som na zaciatku" );
 			multiplePolynomials(compose(id - 1, euclid - 2), *(euclid - 1), resultOfMultiplication);
-			printf("%s\n","result multiplikacie z case def" );
-			printReadableBits(resultOfMultiplication, 10);
-			printf("\n");
 			addingPolynomials(compose(id - 2, euclid - 4), resultOfMultiplication, resultOfAddition);
 
             allocSecondaryMemory();
             memcpy(&(*bezout)[id - 4], resultOfAddition, bytes);
+
 			return &(*bezout)[id - 4];
 	}
-
-
 }
 
 int main() {
@@ -384,11 +379,12 @@ int main() {
 
     euclidAlgorithm(&euclid);
     //printReadableBits(euclid[0],10);
-    p = compose(5, euclid + 7); //euclid[7]
+    p = compose(3 + ((count-1-2) -3)/2, euclid + count - 1 - 2);
+    //first argument describe dependency between array index and Fx position
+    //second argument: count -1 (indexing from O) and -2 (sending remainder from penultimate equation)
     printf("%s\n", "RESULT:");
     printReadableBits(p, 10);
     printf("\n");
-
 
     freeMemory(euclid, count);
     freeMemory(bezout, secondaryCount);
