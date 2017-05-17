@@ -13,4 +13,5 @@ build:
 
   post_ci:
     - make -C ./tests/encdectest/
-    - ./tests/run_encdectest.py
+    - ./tests/run_encdectest_fixed_length.py
+    - ./tests/run_encdectest_rand_length.py
