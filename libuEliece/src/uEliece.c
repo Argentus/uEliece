@@ -35,6 +35,9 @@
 #define MSG (*msg)
 
 
+// Test
+#include <stdio.h>
+
 /***
  *** 1. Quick use functions
  ***
@@ -280,11 +283,14 @@ uint8_t uEliece_unwrap( uint8_t* msg, uEl_msglen_t ctext_len, uEl_msglen_t* len)
 	 */
 	const uEl_msglen_t full_blocks_to_decrypt = (ctext_len - UEL_M_PADDED - 256 - 8)/256;
 
+	printf("Alignment: %li\n", ((long) msg));
+	uint_opt_t* msg_opt = (uint_opt_t*) msg;
+	uint_opt_t* key_opt = (uint_opt_t*) key;
 	for (i=0;i<full_blocks_to_decrypt;i++)
 	{
 		SqueezeHash(&PRNG_state, key, 256/8, &stateOffset);
-		for (j=0;j<32;j++)
-			msg[(32*i)+j] ^= key[j] ;
+		for (j=0; j < (32 / ARCH_BYTE_WIDTH) ; j++)
+			msg_opt[((32 / ARCH_BYTE_WIDTH) * i) + j] ^= key_opt[j] ;
 	}
 	
 	uint8_t remaining_bits_to_decrypt = (ctext_len - UEL_MDPC_M - 256)%256;

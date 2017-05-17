@@ -46,6 +46,7 @@
  * Type definitions:
  */
 
+
 typedef uint8_t uEl_PubKey[(UEL_MDPC_M/8)+1];
 typedef uint16_t uEl_PrivKey[UEL_MDPC_N0][UEL_MDPC_W/UEL_MDPC_N0];
 
@@ -88,6 +89,25 @@ typedef uint64_t uEl_msglen_t;
 const uEl_rng uEl_default_rng();
 #endif
 
+#ifdef BUILDTYPE_64BIT
+#define ARCH_BYTE_WIDTH 8
+typedef uint64_t uint_opt_t;
+#endif //BUILDTYPE_64BIT
+
+#ifdef BUILDTYPE_32BIT
+#define ARCH_BYTE_WIDTH 4
+typedef uint32_t uint_opt_t;
+#endif //BUILDTYPE_32BIT
+
+#ifdef BUILDTYPE_16BIT
+#define ARCH_BYTE_WIDTH 2
+typedef uint16_t uint_opt_t;
+#endif //BUILDTYPE_16BIT
+
+#ifdef BUILDTYPE_8BIT
+#define ARCH_BYTE_WIDTH 1
+typedef uint8_t uint_opt_t;
+#endif //BUILDTYPE_8BIT
 
 /*
  * Function return flags
