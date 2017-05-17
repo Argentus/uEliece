@@ -24,10 +24,10 @@ while i <= N_keys:
         else:
             size_of_tst_file = 10240000 # 10MB        
 
-        print "Run encdectest #" + str(i) + " with size " + str(size_of_tst_file) + " B\n"
+        print "Run encdectest #" + str(i) + " with size " + str(size_of_tst_file) + "B and key '" + str((i % 4) + 1)+"'\n"
         
         start_time = time.time()
-        check_output(["./tests/encdectest/build/encdectest", "-s", str(size_of_tst_file)])
+        check_output(["./tests/encdectest/build/encdectest", str(size_of_tst_file), "./tests/keys/" + str((i % 4) + 1)])
         end_time = time.time()
         
         total_time = end_time - start_time

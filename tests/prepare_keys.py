@@ -16,8 +16,8 @@ while i <= N_keys:
     call(["mkdir", "keys"])        
     call(["../keygen/uEl-keygen", "-B"])
     
-    copyfile("uEl_pub.key", "keys/uEl_pub_" + str(i) + ".key")
-    copyfile("uEl_priv.key", "keys/uEl_priv_" + str(i) + ".key")
+    copyfile("uEl_pub.key", "keys/" + str(i) + ".pub")
+    copyfile("uEl_priv.key", "keys/" + str(i) + ".priv")
     
     os.remove("uEl_pub.key")
     os.remove("uEl_priv.key")

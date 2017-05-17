@@ -6,7 +6,6 @@ from random import randint
 import os
 import time, datetime
 
-#N_keys = len(os.listdir("./tests/keys")) / 2
 N_keys = 100
 i = 1
 
@@ -15,10 +14,10 @@ print str(N_keys) + " tests will be executed\n"
 while i <= N_keys:
     try:
         size_of_tst_file = randint(1024,102400) # 1 B - 100 B
-        print "Run encdectest #" + str(i) + " with size " + str(size_of_tst_file) + " B\n"
+        print "Run encdectest #" + str(i) + " with size " + str(size_of_tst_file) + "B\n"
         
         start_time = time.time()
-        check_output(["./tests/encdectest/build/encdectest", "-s", str(size_of_tst_file)])
+        check_output(["./tests/encdectest/build/encdectest", str(size_of_tst_file), "./tests/keys/" + str(i)])
         end_time = time.time()
         
         total_time = end_time - start_time
