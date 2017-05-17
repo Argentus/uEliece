@@ -1,0 +1,17 @@
+language: c
+
+compiler:
+  - gcc
+  - g++
+
+build:
+  ci:
+    - make -C ./libuEliece/ x64-linux
+    - make -C ./libuEliece/ x64-windows
+    - make -C ./libuEliece/.build-x64-linux release
+    - make -C ./libuEliece/.build-x64-windows release
+
+  post_ci:
+    - make -C ./tests/encdectest/
+    - ./tests/run_encdectest_fixed_length.py
+    - ./tests/run_encdectest_rand_length.py

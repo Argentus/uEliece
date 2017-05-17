@@ -8,66 +8,75 @@
 
 int main(int argc, char *argv[]) {
 
-	if (argc!=2) {
-		printf("Specify size in MB\n");
+	if (argc!=3) {
+		perror("Usage: encdectest <message size in B> <path to key pair (without .priv or .pub extension)>");
 		return -1;
 	}
 
+	char pubkey_path[128];
+	char privkey_path[128];
+	strcpy(pubkey_path, argv[2]);
+	strcpy(privkey_path, argv[2]);
+	strcat(pubkey_path, ".pub");
+	strcat(privkey_path, ".priv");
 	uEl_PubKey public_key;
 	uEl_PrivKey private_key;
 
-//preparing testing file
-        printf("Creating file of given size ...\n");
-        int i = 0;
-        int FILESIZE = (argv[1][1] - '0') * 1<<20;
-        printf("FILESIZE :%d\n", FILESIZE);
-        uint8_t *msg = malloc(FILESIZE);
-        memset(msg,'a', FILESIZE);
+	int size = atoi(argv[1]);
+	if (size > 268435455) {
+		fprintf(stderr, "Requested message %iB is too big! Must be <256MiB\n", size);
+		fflush(stderr);
+		return -2;
+	}
 
-        printf("Preparing for encryption ...\n");
+	FILE* pubkey_file = fopen(pubkey_path, "rb");
+	if (pubkey_file == NULL) {
+		fprintf(stderr, "Cannot open key file '%s'!\n", pubkey_path);
+		fflush(stderr);
+		return -2;
+	}
+	if (fread( public_key, sizeof(uint8_t), (UEL_MDPC_M/8)+1, pubkey_file) != (UEL_MDPC_M/8)+1) {
+		fprintf(stderr, "Key file '%s' is invalid!\n", pubkey_path);
+		fflush(stderr);
+		return -2;
+	}
+	fclose(pubkey_file);
 
-        FILE* pubkey_file = fopen("uEl_pub.key", "rb");
-        if (pubkey_file == NULL)
-                return -1;
-        if (fread( public_key, sizeof(uint8_t), (UEL_MDPC_M/8)+1, pubkey_file) != (UEL_MDPC_M/8)+1)
-                return -1;
-        fclose(pubkey_file);
+	FILE* privkey_file = fopen(privkey_path, "rb");
+	if (fread( private_key[0], sizeof(uint16_t), UEL_MDPC_W/2, privkey_file) != UEL_MDPC_W/2) {
+		fprintf(stderr, "Cannot open key file '%s'!\n", privkey_path);
+		fflush(stderr);
+		return -2;
+	}
+	if (fread( private_key[1], sizeof(uint16_t), UEL_MDPC_W/2, privkey_file) != UEL_MDPC_W/2) {
+		fprintf(stderr, "Key file '%s' is invalid!\n", privkey_path);
+		fflush(stderr);
+		return -2;
+	}
+	fclose(privkey_file);
 
-        uEl_msglen_t length;
-        uEl_msglen_t len = FILESIZE * 8;
+	uint8_t *msg = malloc(size);
+	memset(msg,'a', size);
 
+	uEl_msglen_t length;
+	uEl_msglen_t len = size * 8;
 
-        printf("Encrypting\n"); fflush(stdout);
-        uEliece_encrypt( &msg, len, &length, public_key, uEl_default_rng() );
+	uEliece_encrypt( &msg, len, &length, public_key, uEl_default_rng() );
 
-        FILE* outfile = fopen("myfile.encrypted","wb");
-        fwrite(msg, length, 1, outfile);
-        fclose(outfile);
+	if (uEliece_decrypt(&msg,length*8,&length,private_key ) & UEL_BAD_INTEGRITY) {
+		fprintf(stderr, "Decoded message integrity check failed!\n");
+		fflush(stderr);
+		return -1;
+	}
 
-        printf("Encryption finished\n");  
-        printf("Preparing for decryption ...\n"); 
-
-        FILE* privkey_file = fopen("uEl_priv.key", "rb");
-        if (fread( private_key[0], sizeof(uint16_t), UEL_MDPC_W/2, privkey_file) != UEL_MDPC_W/2)
-                return -1;
-        if (fread( private_key[1], sizeof(uint16_t), UEL_MDPC_W/2, privkey_file) != UEL_MDPC_W/2)
-                return -1;
-        fclose(privkey_file); 
-
-        if (uEliece_decrypt(&msg,length*8,&length,private_key ) & UEL_BAD_INTEGRITY) {
-                printf("Bad integrity");
-        }
-        printf("Decryption finished\n"); 
-
-        printf("Validation starting ...\n"); 
-        for(i = 0; i < FILESIZE; i++) {
-                if(msg[i] != 'a') {
-                        printf("Validation failed!\n");
-                        return -1;
-                }
-        }
-        printf("Validation succeeded. Everything works\n");
-
+	int i;
+	for(i = 0; i < size; i++) {
+		if(msg[i] != 'a') {
+			fprintf(stderr, "Decrypted message invalid!\n");
+			fflush(stderr);
+			return -1;
+		}
+	}
 
 	return 0;
 }
