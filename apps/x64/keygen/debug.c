@@ -243,13 +243,13 @@ void euclidAlgorithm(int ***euclid) {
 
 
     // printArray(indexes, w0);
-    allocMemory(euclid);
-    SetBit((*euclid)[0], X);
-    SetBit((*euclid)[0], 0);
+    // allocMemory(euclid);
+    // SetBit((*euclid)[0], X);
+    // SetBit((*euclid)[0], 0);
 
-    allocMemory(euclid);
-    generateIndexes(indexes);
-    createPolynomial(indexes, (*euclid)[1]);
+    // allocMemory(euclid);
+    // generateIndexes(indexes);
+    // createPolynomial(indexes, (*euclid)[1]);
     //SetBit((*euclid)[1], X-20);
 
     // allocMemory(euclid);
@@ -304,27 +304,27 @@ void euclidAlgorithm(int ***euclid) {
   allocMemory(euclid);
   dividePolynomials((*euclid)[0], (*euclid)[1], (*euclid)[2], (*euclid)[3]);
 
-
+ */
     
     allocMemory(euclid);
-    SetBit((*euclid)[0],8);
+    SetBit((*euclid)[0],211);
     SetBit((*euclid)[0],4);
   SetBit((*euclid)[0],3);
   SetBit((*euclid)[0],1);
   SetBit((*euclid)[0],0);
     allocMemory(euclid);
-    SetBit((*euclid)[1],6);
+    SetBit((*euclid)[1],123);
     SetBit((*euclid)[1],4);
     SetBit((*euclid)[1],1);
     SetBit((*euclid)[1],0);
-    */
+   
   allocMemory(euclid);
   allocMemory(euclid);
   dividePolynomials((*euclid)[0], (*euclid)[1], (*euclid)[2], (*euclid)[3]);
     
-  /* printing progress
+  /* printing progress  */
     printf("[");
-    printReadableBits((*euclid)[0], 10);
+    printReadableBits((*euclid)[0], 15);
     printf("%s", "] : [");
     printReadableBits((*euclid)[1], 10);
     printf("]");
@@ -334,7 +334,7 @@ void euclidAlgorithm(int ***euclid) {
     printf("%s ", "] zv. [");
     printReadableBits((*euclid)[3], 10);
     printf("]\n");
-  */
+
   i = 1;
 
     while(!checkZeroPolynomial((*euclid)[i+2])) {
@@ -342,7 +342,7 @@ void euclidAlgorithm(int ***euclid) {
     allocMemory(euclid);
     dividePolynomials((*euclid)[i+0], (*euclid)[i+2], (*euclid)[i+3], (*euclid)[i+4]);
 
-    /*printing progress
+    /*printing progress    */
       printf("[");
       printReadableBits((*euclid)[i+0], 10);
       printf("%s", "] : [");
@@ -354,7 +354,7 @@ void euclidAlgorithm(int ***euclid) {
       printf("%s ", "] zv. [");
       printReadableBits((*euclid)[i+4], 10);
       printf("]\n");
-    */
+
     i+=2;
     //printf("%d \n",i); 
     }
@@ -403,14 +403,14 @@ int main() {
 
     //printReadableBits(euclid[0],10);
     printf("WELL : %d\n", 3 + ((count-1-2) -3)/2);
-    //p = compose(3 + ((count-1-2) -3)/2, euclid + count - 1 - 2);
+    p = compose(3 + ((count-1-2) -3)/2, euclid + count - 1 - 2);
     //first argument describe dependency between array index and Fx position
     //second argument: count -1 (indexing from O) and -2 (sending remainder from penultimate equation)
     printf("%s\n", "RESULT:");
     printReadableBits(p, 10);
     printf("\n");
 
-    printf("COUNT: %d\n", count);
+    printf("COUNT: %d a druhy %d \n", count, secondaryCount);
     freeMemory(euclid, count);
     freeMemory(bezout, secondaryCount);
     
