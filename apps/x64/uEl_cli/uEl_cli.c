@@ -11,71 +11,69 @@
 
 void printHelp(char *argv[]){
     printf("Usage:\n");
-    printf(" %s <-e | -d> <input file> <output file>\n", argv[0]);
     printf(" %s [Options]\n\n", argv[0]);
     
     printf("Options:\n");
-    printf(" -e\t Encrypt input file and save as encrypted output file\n");
-    printf(" -d\t Decrypt input file and save as decrypted output file\n");
-    printf(" -s\t Set default private key path\n");
-    printf(" -v\t Set default public key path\n");
+    printf(" -e\t\t\t Encrypt file\n");
+    printf(" -d\t\t\t Decrypt file\n");
+    printf("\n -i <input file path>\t Input file path\n");
+    printf(" -o <output file path>\t Output file path\n");
+    printf("\n -k <key path>\t\t Current path of public/private key\n");
+    printf("\t\t\t Specified key will replace default key in\n");
+    printf("\t\t\t current encryption/decryption process\n");
+    printf("\n -s <private key path>\t Set default private key path\n");
+    printf("\t\t\t Specified key will be used in every decryption process\n");
+    printf("\n -v <public key path>\t Set default public key path\n");
+    printf("\t\t\t Specified key will be used in every encryption process\n");
     
-    printf("\n -h\t Print this help and exit\n");
+    printf("\n -h\t\t\t Print this help and exit\n");
 }
 
-int encryptFile(char *inFilePath, char *outFilePath){
+int encryptFile(char *inFilePath, char *outFilePath, char *pubKeyPath){
     uEl_PubKey publicKey;
-    FILE *pubkeyFile, *inFile, *outFile, *cpkFile;
+    FILE *pubkeyFile, *inFile, *outFile, *dpkFile;
     uint64_t fileSize;
     uint16_t i;
     uint8_t *msg;
     uEl_msglen_t length, len;
-    char *pubKeyPath, *cpkFileDir, c;
-    /*char *pubKeyDir;
-    
-    pubkeyDir = (char*) malloc(strlen(getenv("HOME")) + strlen("/.uEliece/public_keys/uEl_pub.key") + 1);
-    strcpy(pubkeyDir, getenv("HOME"));
-    strcat(pubkeyDir, "/.uEliece/public_keys/uEl_pub.key");
-    
-    if((pubkeyFile = fopen(pubkeyDir, "rb")) == NULL){
-        fprintf(stderr, "ERROR: Open public key file\n");
-        exit(EXIT_FAILURE);
-    }
-    free(pubkeyDir);*/
+    char *dpkFileDir, c;
 
-    cpkFileDir = (char*) malloc(strlen(getenv("HOME")) + strlen("/.uEliece/current_pubkey.txt") + 1);
-    strcpy(cpkFileDir, getenv("HOME"));
-    strcat(cpkFileDir, "/.uEliece/current_pubkey.txt");
+    if(pubKeyPath == NULL){
+        dpkFileDir = (char*) malloc(strlen(getenv("HOME")) + strlen("/.uEliece/default_pubkey.txt") + 1);
+        strcpy(dpkFileDir, getenv("HOME"));
+        strcat(dpkFileDir, "/.uEliece/default_pubkey.txt");
 
-    if((cpkFile = fopen(cpkFileDir, "r")) == NULL){
-        fprintf(stderr, "ERROR: current_pubkey.txt file not found\nPlease set default public key path\n");
-        exit(EXIT_FAILURE);
-    }
-    free(cpkFileDir);
+        if((dpkFile = fopen(dpkFileDir, "r")) == NULL){
+            fprintf(stderr, "ERROR: default_pubkey.txt file not found\n");
+            fprintf(stderr, "Please specify path to public key (option '-k') or set default public key path (option '-v')\n");
+            exit(EXIT_FAILURE);
+        }
+        free(dpkFileDir);
     
-    pubKeyPath = (char*) malloc(sizeof(char));
-    i = 0;
-    while((c = fgetc(cpkFile)) != EOF){
-        pubKeyPath[i] = c;
-        i++;
-        pubKeyPath = realloc(pubKeyPath, (i + 1) * sizeof(char));
+        pubKeyPath = (char*) malloc(sizeof(char));
+        i = 0;
+        while((c = fgetc(dpkFile)) != EOF){
+            pubKeyPath[i] = c;
+            i++;
+            pubKeyPath = realloc(pubKeyPath, (i + 1) * sizeof(char));
+        }
+        pubKeyPath[i] = '\0';
+        fclose(dpkFile);
     }
-    fclose(cpkFile);
 
     if((pubkeyFile = fopen(pubKeyPath, "rb")) == NULL){
-        fprintf(stderr, "ERROR: Open public key file\n");
+        fprintf(stderr, "ERROR: Can't open public key file '%s'\n", pubKeyPath);
         exit(EXIT_FAILURE);
     }
-    free(pubKeyPath);
-    
 
     if(fread(publicKey, sizeof(uint8_t), (UEL_MDPC_M / 8) + 1, pubkeyFile) != (UEL_MDPC_M / 8) + 1){
-        exit(EXIT_FAILURE); //TODO Error Message 
+        fprintf(stderr, "ERROR: Public key file '%s' is invalid\n", pubKeyPath);
+        exit(EXIT_FAILURE); 
     }
     fclose(pubkeyFile);
     
     if((inFile = fopen(inFilePath, "rb")) == NULL){
-        fprintf(stderr, "ERROR: Open input file\n");
+        fprintf(stderr, "ERROR: Can't open input file '%s'\n", inFilePath);
         exit(EXIT_FAILURE);
     }
     
@@ -94,7 +92,7 @@ int encryptFile(char *inFilePath, char *outFilePath){
     uEliece_encrypt(&msg, len, &length, publicKey, uEl_default_rng());
 
     if((outFile = fopen(outFilePath, "wb")) == NULL){
-        fprintf(stderr, "ERROR: Open output file for write\n");
+        fprintf(stderr, "ERROR: Can't open output file '%s' for write\n", outFilePath);
         exit(EXIT_FAILURE);
     }
 
@@ -106,61 +104,55 @@ int encryptFile(char *inFilePath, char *outFilePath){
     return 0;
 }
 
-int decryptFile(char *inFilePath, char *outFilePath){
+int decryptFile(char *inFilePath, char *outFilePath, char *privKeyPath){
     uEl_PrivKey privateKey;
-    FILE *privkeyFile, *inFile, *outFile, *cpkFile;
+    FILE *privkeyFile, *inFile, *outFile, *dpkFile;
     uint64_t fileSize;
     uint16_t i;
     uint8_t *msg;
     uEl_msglen_t length, len;
-    char *privKeyPath, *cpkFileDir, c;
-    /*char *privkeyDir;
-    
-    privkeyDir = (char*) malloc(strlen(getenv("HOME")) + strlen("/.uEliece/private_keys/uEl_priv.key") + 1);
-    strcpy(privkeyDir, getenv("HOME"));
-    strcat(privkeyDir, "/.uEliece/private_keys/uEl_priv.key");
-    
-    if((privkeyFile = fopen(privkeyDir, "rb")) == NULL){
-        fprintf(stderr, "ERROR: Open private key file\n");
-        exit(EXIT_FAILURE);
-    }
-    free(privkeyDir);*/
+    char *dpkFileDir, c;
 
-    cpkFileDir = (char*) malloc(strlen(getenv("HOME")) + strlen("/.uEliece/current_privkey.txt") + 1);
-    strcpy(cpkFileDir, getenv("HOME"));
-    strcat(cpkFileDir, "/.uEliece/current_privkey.txt");
+    if(privKeyPath == NULL){
+        dpkFileDir = (char*) malloc(strlen(getenv("HOME")) + strlen("/.uEliece/default_privkey.txt") + 1);
+        strcpy(dpkFileDir, getenv("HOME"));
+        strcat(dpkFileDir, "/.uEliece/default_privkey.txt");
 
-    if((cpkFile = fopen(cpkFileDir, "r")) == NULL){
-        fprintf(stderr, "ERROR: current_privkey.txt file not found\nPlease set default private key path\n");
-        exit(EXIT_FAILURE);
-    }
-    free(cpkFileDir);
+        if((dpkFile = fopen(dpkFileDir, "r")) == NULL){
+            fprintf(stderr, "ERROR: default_privkey.txt file not found\n");
+            fprintf(stderr, "Please specify path to private key (option '-k') or set default private key path (option '-s')\n");
+            exit(EXIT_FAILURE);
+        }
+        free(dpkFileDir);
     
-    privKeyPath = (char*) malloc(sizeof(char));
-    i = 0;
-    while((c = fgetc(cpkFile)) != EOF){
-        privKeyPath[i] = c;
-        i++;
-        privKeyPath = realloc(privKeyPath, (i + 1) * sizeof(char));
+        privKeyPath = (char*) malloc(sizeof(char));
+        i = 0;
+        while((c = fgetc(dpkFile)) != EOF){
+            privKeyPath[i] = c;
+            i++;
+            privKeyPath = realloc(privKeyPath, (i + 1) * sizeof(char));
+        }
+        privKeyPath[i] = '\0';
+        fclose(dpkFile);
     }
-    fclose(cpkFile);
 
     if((privkeyFile = fopen(privKeyPath, "rb")) == NULL){
-        fprintf(stderr, "ERROR: Open private key file\n");
+        fprintf(stderr, "ERROR: Can't open private key file '%s'\n", privKeyPath);
         exit(EXIT_FAILURE);
     }
-    free(privKeyPath);
     
     if(fread(privateKey[0], sizeof(uint16_t), (UEL_MDPC_W / 2), privkeyFile) != (UEL_MDPC_W / 2)){
-        exit(EXIT_FAILURE); //TODO Error Message 
+        fprintf(stderr, "ERROR: Private key file '%s' is ivalid\n", privKeyPath);
+        exit(EXIT_FAILURE);
     }
     if(fread(privateKey[1], sizeof(uint16_t), (UEL_MDPC_W / 2), privkeyFile) != (UEL_MDPC_W / 2)){
-        exit(EXIT_FAILURE); //TODO Error Message 
+        fprintf(stderr, "ERROR: Private key file '%s' is ivalid\n", privKeyPath);
+        exit(EXIT_FAILURE);
     }
     fclose(privkeyFile);
     
     if((inFile = fopen(inFilePath, "rb")) == NULL){
-        fprintf(stderr, "ERROR: Open input file\n");
+        fprintf(stderr, "ERROR: Can't open input file '%s'\n", inFilePath);
         exit(EXIT_FAILURE);
     }
     
@@ -181,7 +173,7 @@ int decryptFile(char *inFilePath, char *outFilePath){
     }
 
     if((outFile = fopen(outFilePath, "wb")) == NULL){
-        fprintf(stderr, "ERROR: Open output file for write\n");
+        fprintf(stderr, "ERROR: Can't open output file '%s' for write\n", outFilePath);
         exit(EXIT_FAILURE);
     }
 
@@ -193,127 +185,165 @@ int decryptFile(char *inFilePath, char *outFilePath){
     return 0;
 }
 
-int setCurrentPubKey(char *pubKeyPath){
-    FILE *cpkFile;
-    char *cpkPath;
+int setDefaultPubKey(char *pubKeyPath){
+    FILE *dpkFile;
+    char *dpkPath;
 
-    cpkPath = (char*) malloc(strlen(getenv("HOME")) + strlen("/.uEliece/current_pubkey.txt") + 1);
-    strcpy(cpkPath, getenv("HOME"));
-    strcat(cpkPath, "/.uEliece/current_pubkey.txt");
+    dpkPath = (char*) malloc(strlen(getenv("HOME")) + strlen("/.uEliece/default_pubkey.txt") + 1);
+    strcpy(dpkPath, getenv("HOME"));
+    strcat(dpkPath, "/.uEliece/default_pubkey.txt");
 
-    if((cpkFile = fopen(cpkPath, "w")) == NULL){
-        fprintf(stderr, "ERROR: Open current_pubkey.txt file\n");
+    if((dpkFile = fopen(dpkPath, "w")) == NULL){
+        fprintf(stderr, "ERROR: Open default_pubkey.txt file\n");
         exit(EXIT_FAILURE);
     }
-    free(cpkPath);
+    free(dpkPath);
     
-    if((fputs(pubKeyPath, cpkFile)) == EOF){
-        fprintf(stderr, "ERROR: Write to current_pubkey.txt failed\n");
+    if((fputs(pubKeyPath, dpkFile)) == EOF){
+        fprintf(stderr, "ERROR: Write to default_pubkey.txt failed\n");
         exit(EXIT_FAILURE);
     }
 
-    fclose(cpkFile);
+    fclose(dpkFile);
 
     return 0;
 }
 
-int setCurrentPrivKey(char *privKeyPath){
-    FILE *cpkFile;
-    char *cpkPath;
+int setDefaultPrivKey(char *privKeyPath){
+    FILE *dpkFile;
+    char *dpkPath;
 
-    cpkPath = (char*) malloc(strlen(getenv("HOME")) + strlen("/.uEliece/current_privkey.txt") + 1);
-    strcpy(cpkPath, getenv("HOME"));
-    strcat(cpkPath, "/.uEliece/current_privkey.txt");
+    dpkPath = (char*) malloc(strlen(getenv("HOME")) + strlen("/.uEliece/default_privkey.txt") + 1);
+    strcpy(dpkPath, getenv("HOME"));
+    strcat(dpkPath, "/.uEliece/default_privkey.txt");
 
-    if((cpkFile = fopen(cpkPath, "w")) == NULL){
-        fprintf(stderr, "ERROR: Open current_privkey.txt file\n");
+    if((dpkFile = fopen(dpkPath, "w")) == NULL){
+        fprintf(stderr, "ERROR: Open default_privkey.txt file\n");
         exit(EXIT_FAILURE);
     }
-    free(cpkPath);
+    free(dpkPath);
     
-    if((fputs(privKeyPath, cpkFile)) == EOF){
-        fprintf(stderr, "ERROR: Write to current_privkey.txt failed\n");
+    if((fputs(privKeyPath, dpkFile)) == EOF){
+        fprintf(stderr, "ERROR: Write to default_privkey.txt failed\n");
         exit(EXIT_FAILURE);
     }
 
-    fclose(cpkFile);
+    fclose(dpkFile);
 
     return 0;
 }
 
 int parseArgs(int argc, char *argv[]){
     int opt;
+    int e = -1;
+    int d = -1;
+    int i = -1;
+    int o = -1;
+    int k = -1;
+    int s = -1;
+    int v = -1;
+   
+    char *iArg, *oArg, *kArg, *sArg, *vArg;
 
-    while((opt = getopt(argc, argv, "he:d:s:v:")) != -1){
+    while((opt = getopt(argc, argv, "hedi:o:k:s:v:")) != -1){
         switch(opt){
         case 'h':
             printHelp(argv);
             exit(EXIT_SUCCESS);
 
         case 'e':
-            if(argc != 4){
-                if(!argv[2]){
-                    fprintf(stderr, "Please specify input file\n");
-                    exit(EXIT_FAILURE);
-                }
-                else if(!argv[3]){
-                    fprintf(stderr, "Please specify output file\n");
-                    exit(EXIT_FAILURE);
-                }
-                else{
-                    fprintf(stderr, "Too much arguments\n");
-                    exit(EXIT_FAILURE);
-                }
-            }
-            else{
-                encryptFile(argv[2], argv[3]);
-            }
+            e = 1;
             break;
 
         case 'd':
-            if(argc != 4){
-                if(!argv[2]){
-                    fprintf(stderr, "Please specify input file\n");
-                    exit(EXIT_FAILURE);
-                }
-                else if(!argv[3]){
-                    fprintf(stderr, "Please specify output file\n");
-                    exit(EXIT_FAILURE);
-                }
-                else{
-                    fprintf(stderr, "Too much arguments\n");
-                    exit(EXIT_FAILURE);
-                }
-            }
-            else{
-                decryptFile(argv[2], argv[3]);
-            }
+            d = 1;
+            break;
+
+        case 'i':
+            i = atoi(optarg);
+            iArg = optarg;
+            break;
+        
+        case 'o':
+            o = atoi(optarg);
+            oArg = optarg;
+            break;
+
+        case 'k':
+            k = atoi(optarg);
+            kArg = optarg;
             break;
 
         case 's':
-            if(argc > 3){
-                fprintf(stderr, "Too much arguments\n");
-                exit(EXIT_FAILURE);
-            }
-            else{
-                setCurrentPrivKey(argv[2]);
-            }
+            s = atoi(optarg);
+            sArg = optarg;
             break;
 
         case 'v':
-            if(argc > 3){
-                fprintf(stderr, "Too much arguments\n");
-                exit(EXIT_FAILURE);
-            }
-            else{
-                setCurrentPubKey(argv[2]);
-            }
+            v = atoi(optarg);
+            vArg = optarg;
             break;
 
         default:
             printHelp(argv);
             exit(EXIT_FAILURE);
        }
+    }
+
+    if(s != -1){
+        setDefaultPrivKey(sArg);
+    }
+
+    if(v != -1){
+        setDefaultPubKey(vArg);
+    }
+
+    if(e != -1){
+        if(i == -1){
+            fprintf(stderr, "Please specify input file\n");
+            exit(EXIT_FAILURE);
+        }
+
+        if(o == -1){
+            fprintf(stderr, "Please specify output file\n");
+            exit(EXIT_FAILURE);
+        }
+
+        if(d != -1){
+            fprintf(stderr, "Please specify only one of options (-e | -d)\n");
+            exit(EXIT_FAILURE);
+        }
+
+        if(k != -1){
+            encryptFile(iArg, oArg, kArg);
+        }
+        else{
+            encryptFile(iArg, oArg, NULL);
+        }
+    }
+
+    if(d != -1){
+        if(i == -1){
+            fprintf(stderr, "Please specify input file\n");
+            exit(EXIT_FAILURE);
+        }
+
+        if(o == -1){
+            fprintf(stderr, "Please specify output file\n");
+            exit(EXIT_FAILURE);
+        }
+
+        if(e != -1){
+            fprintf(stderr, "Please specify only one of options (-e | -d)\n");
+            exit(EXIT_FAILURE);
+        }
+
+        if(k != -1){
+            decryptFile(iArg, oArg, kArg);
+        }
+        else{
+            decryptFile(iArg, oArg, NULL);            
+        }
     }
 
     return 0;
