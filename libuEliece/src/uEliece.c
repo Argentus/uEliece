@@ -495,7 +495,7 @@ uint8_t uEliece_encode( uint8_t* msg, uEl_PubKey pubkey ) {
 	uint8_t buff2;
 	uint16_t k;
 
-	for(k=0;k<((UEL_MDPC_M+7)/8)-1;k++) {		// Rotation of public key back to original
+	for(k=0;k<((UEL_MDPC_M+7)/8)-1;k++) {		// fRotation of public key back to original
 		buff |= pubkey[k]<<1;
 		buff2 = pubkey[k]>>7;
 		pubkey[k] = buff;

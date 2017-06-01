@@ -54,6 +54,9 @@ int main(int argc, char *argv[]) {
 	if (mode==0) {
 		printf("Encrypting\n"); fflush(stdout);
 		uEliece_encrypt( &msg, len, &length, public_key, uEl_default_rng() );
+	int i;
+	for ( i = 0; i < 100; i++)
+		printf("%d\n",((msg[i/8])>>(i/8) &1));
 	} else {
 		if (uEliece_decrypt( &msg, len, &length, private_key ) & UEL_BAD_INTEGRITY)
 			printf("BAD INTEGRITY\n");
